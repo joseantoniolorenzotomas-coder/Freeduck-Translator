@@ -114,6 +114,7 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-14).
 
 ## Pendiente de decidir
+- App nativa móvil (APK Android / IPA iOS) frente a solo PWA instalable.
 - Plataformas iniciales: ordenador, móvil o ambas; sistemas operativos concretos.
 - Si la primera versión será una PWA, una aplicación instalable o ambas.
 - Tecnología y lenguaje de programación.
