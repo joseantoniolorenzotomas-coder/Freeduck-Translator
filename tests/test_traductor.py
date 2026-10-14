@@ -395,6 +395,9 @@ def main():
     check("voz-devuelve-motor",
           "resolve('offline')" not in js and "return 'natural'" in js
           and "return 'robot'" in js and "return 'system'" in js)
+    check("voz-natural-estricta",
+          "tryRobot" not in js
+          and "if (pref === 'natural') return null" in js)
     check("voz-diagnostico",
           all(x in js for x in ("paintVoiceLoad", "__voiceLoad", "loadVoice('es',"))
           and 'id="voiceLoad"' in html

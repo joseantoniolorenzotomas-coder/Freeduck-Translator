@@ -1176,14 +1176,13 @@ async function translateText(text, fromCode, toCode) {
 ══════════════════════════════════════════════════════ */
 function speakText(text, langCode) {
   // Devuelve 'natural' | 'robot' | 'system' | null.
-  // 'natural' es la voz principal con reserva (robótica, sistema) para no
-  // quedarse nunca muda; 'robot' y 'system' son estrictas.
+  // Todas estrictas: cada preferencia usa solo su motor.
   return (async () => {
     const pref = voicePref();
-    const tryNatural = pref === 'natural';
-    const tryRobot = pref === 'natural' || pref === 'robot';
+    // 'natural' usa SOLO la voz natural (sin reservas a la robótica);
+    // 'robot' y 'system' son estrictas.
     // 1. Voz natural offline (Piper/sherpa)
-    if (tryNatural && window.SherpaVoice && SherpaVoice.isSupported(langCode)) {
+    if (pref === 'natural' && window.SherpaVoice && SherpaVoice.isSupported(langCode)) {
       try {
         stopAllVoices();
         if (await SherpaVoice.isReady(langCode)) {
@@ -1193,11 +1192,18 @@ function speakText(text, langCode) {
           ]);
           try { SherpaVoice.stop(); } catch {}
           if (ok) return 'natural';
+          toast('❌ La voz natural falló al hablar', 4000);
+          return null;
         }
-      } catch {}
+        toast('⬇ Descarga la voz natural para usarla (es la voz principal)', 5000);
+        return null;
+      } catch {
+        return null;
+      }
     }
-    // 2. Voz robótica offline (eSpeak, la divertida)
-    if (tryRobot && window.meSpeak && OFFLINE_VOICE[langCode]) {
+    if (pref === 'natural') return null;
+    // 2. Voz robótica offline (eSpeak, la divertida; solo si se elige)
+    if (pref === 'robot' && window.meSpeak && OFFLINE_VOICE[langCode]) {
       try { meSpeak.stop(); } catch {}
       try {
         if (meSpeak.isVoiceLoaded(OFFLINE_VOICE[langCode])) {
@@ -1250,7 +1256,7 @@ function voicePref() {
 function voicePrefChange() {
   const v = document.getElementById('voicePref').value;
   store('fd_voice', v);
-  toast(v === 'natural' ? '🌟 Voz natural (con reserva a robótica y sistema)'
+  toast(v === 'natural' ? '🌟 Voz natural (solo natural, sin reservas)'
     : v === 'robot' ? '🤖 Voz robótica offline, la divertida (ES/EN)'
     : '🔊 Voz del sistema');
 }

@@ -90,6 +90,11 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Consecuencias:** Se elimina Kokoro (código, voces en nube y token HF) para no mantener dos vías sin verificar. Atribuciones en `vendor/sherpa/NOTICE.txt` y Documentación §8.
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-14).
 
+### 2026-10-14 — Voz natural estricta (sin reservas)
+- **Decisión:** La preferencia «natural» usa SOLO la voz natural; si falta el modelo o falla, avisa (descargarla o elegir otra) en vez de cambiar sola a la robótica. La robótica solo suena si se elige.
+- **Motivo:** En conversación alternaba sola entre natural y robótica; el propietario quiere una sola voz principal.
+- **Aprobada por:** propietario del proyecto (sesión 2026-10-14).
+
 ### 2026-10-14 — Distribución local con Docker
 - **Decisión:** Añadir `Dockerfile` (nginx:alpine), `nginx.conf`, `docker-compose.yml` y `.dockerignore` para probar la app igual en Windows, macOS y Linux con `docker compose up --build` (puerto 8901).
 - **Motivo:** Propuesta del propietario: descargar/ejecutar fácil en varios sistemas. Además nginx ya envía las cabeceras COOP/COEP que exige la voz natural.
