@@ -408,6 +408,9 @@ def main():
     check("aviso-file",
           "location.protocol === 'file:'" in js
           and 'content://' in js)
+    check("leeme-primero",
+          (ROOT / "LEEME_ABRIR_PRIMERO.txt").exists()
+          and "pantalla de inicio" in (ROOT / "LEEME_ABRIR_PRIMERO.txt").read_text(encoding="utf-8"))
     check("voz-natural-cableada",
           'type="module" src="voice-sherpa.js"' in html
           and "window.SherpaVoice" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8")

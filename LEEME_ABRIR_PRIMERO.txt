@@ -1,0 +1,30 @@
+Freeduck-Translator — LEÉME PRIMERO
+====================================
+
+Esta carpeta ES la aplicación. Según tu dispositivo, úsala así:
+
+MÓVIL (Android/iPhone) — RECOMENDADO
+1. Abre en Chrome la página web del proyecto
+   (la publicada en GitHub Pages).
+2. Menú ⋮ → «Añadir a pantalla de inicio» (iPhone: Compartir → Añadir).
+3. Aparecerá el icono del pato junto a tus demás apps y abrirá
+   a pantalla completa, como una app normal.
+
+Los archivos sueltos NO pueden crear un icono por sí solos en el
+móvil: el icono lo pone el navegador al instalar la página.
+Abrir index.html con el gestor de archivos solo sirve de
+emergencia (sin offline ni voces locales).
+
+ORDENADOR
+- Fácil: haz doble clic en index.html para probar la traducción
+  online (la voz y el offline necesitan servidor, ver abajo).
+- Completo: sirve la carpeta para tenerlo todo:
+    python3 servir.py
+  y abre http://localhost:8901
+- Instalable: desde Chrome, menú ⋮ → «Instalar Freeduck-Translator».
+
+DESCARGAR EL OFFLINE (una vez, con internet)
+Dentro de la app, pulsa «Descargar modelo» y «Descargar voz
+natural». Después funciona sin conexión el texto y la voz ES↔EN.
+
+Versión 0.3-voz · Ayuda y código en el repositorio del proyecto.
