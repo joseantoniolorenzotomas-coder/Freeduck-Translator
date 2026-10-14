@@ -405,6 +405,9 @@ def main():
     check("micro-test",
           'onclick="micTest()"' in html and "function micTest(" in js
           and "getUserMedia" in js and "isSecureContext" in js)
+    check("aviso-file",
+          "location.protocol === 'file:'" in js
+          and 'content://' in js)
     check("voz-natural-cableada",
           'type="module" src="voice-sherpa.js"' in html
           and "window.SherpaVoice" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8")

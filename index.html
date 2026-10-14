@@ -1057,6 +1057,12 @@ window.addEventListener('freeduck:voice-ready', () => { if (typeof refreshKokoro
     document.getElementById('ttsBtn').style.display = '';
   }
 
+  // Aviso file://: abierto como archivo local, los motores offline no pueden
+  // funcionar (el navegador bloquea módulos y workers). Voz del sistema sí.
+  if (location.protocol === 'file:' || String(location.href).startsWith('content://')) {
+    toast('📂 Abierto como archivo: instala la PWA o sírvelo por http para offline y voces locales. Aquí solo voz del sistema.', 7000);
+  }
+
   // Voces offline (eSpeak): se cargan del propio paquete, sin red.
   // Si el modo worker falla (p. ej. file:// o navegadores capados), se
   // reintenta en modo simple (single-thread), que funciona en todas partes.
