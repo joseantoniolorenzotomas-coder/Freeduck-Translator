@@ -689,6 +689,7 @@
       <div class="voice-info">
         <span class="voice-status" id="offlineStatus">Motor offline: cargando…</span>
         <span class="voice-sub" id="offlineHint">Voz robótica offline incluida para ES/EN. El dictado (micrófono) sigue necesitando internet.</span>
+        <span class="voice-sub" id="offlineReady">Sin conexión listo: comprobando…</span>
         <span class="voice-sub" id="voiceEngine">Voz: natural (principal)</span>
         <span class="voice-sub" id="voiceLoad">Robótica: ES … / EN …</span>
       </div>
@@ -1120,6 +1121,7 @@ window.addEventListener('freeduck:voice-ready', () => { if (typeof refreshKokoro
 
   refreshOfflineBar();
   refreshKokoro();
+  refreshReadyMatrix();
 
   renderHist();
   ping();
@@ -1294,6 +1296,7 @@ function paintVoiceLoad() {
   const el = document.getElementById('voiceLoad');
   if (!el || !window.__voiceLoad) return;
   el.textContent = `Robótica: ES ${window.__voiceLoad.es} / EN ${window.__voiceLoad.en}`;
+  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 function voiceTest() {
@@ -1809,6 +1812,7 @@ async function refreshOfflineBar() {
     btn.style.display = '';
     btn.disabled = false;
   }
+  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 async function offlineAction() {
@@ -1894,6 +1898,7 @@ async function refreshKokoro() {
     btn.style.display = '';
     btn.disabled = false;
   }
+  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 async function kokoroAction() {
@@ -1934,6 +1939,30 @@ async function kokoroAction() {
     toast(`❌ No se pudo descargar la voz${msg ? ': ' + msg : '. Comprueba la conexión.'}`, 6000);
   }
   refreshKokoro();
+}
+
+/* Resumen de lo listo para usar sin conexión (texto y voces, ambos
+   sentidos). Para que valga, hay que pulsar los botones de descarga
+   DENTRO de la app con internet; bajar el ZIP no prepara nada. */
+async function refreshReadyMatrix() {
+  const el = document.getElementById('offlineReady');
+  if (!el) return;
+  let tEN = false, tES = false, vES = false, vEN = false, rES = false, rEN = false;
+  try {
+    if (window.Offline) {
+      tEN = await Offline.isReady('es', 'en');
+      tES = await Offline.isReady('en', 'es');
+    }
+    if (window.SherpaVoice) {
+      vES = await SherpaVoice.isReady('es');
+      vEN = await SherpaVoice.isReady('en');
+    }
+    const vl = window.__voiceLoad || {};
+    rES = vl.es === '✓';
+    rEN = vl.en === '✓';
+  } catch {}
+  const mark = (ok) => ok ? '✓' : '✗';
+  el.textContent = `Sin conexión listo: texto ES→EN ${mark(tEN)} · EN→ES ${mark(tES)} · voz natural ES ${mark(vES)} / EN ${mark(vEN)} · robótica ES ${mark(rES)} / EN ${mark(rEN)}`;
 }
 
 /* ══════════════════════════════════════════════════════
