@@ -1238,10 +1238,16 @@ function speakText(text, langCode) {
       const u = new SpeechSynthesisUtterance(text);
       u.lang  = LOCALES[langCode] || langCode;
       u.rate  = 0.95;
-      u.onend = () => res();
-      u.onerror = () => res();
+      // Remedio al cuelgue de Chrome con locuciones largas: reanuda
+      // periódicamente hasta terminar.
+      const keep = setInterval(() => { try { speechSynthesis.resume(); } catch {} }, 5000);
+      u.onend = () => { clearInterval(keep); res(); };
+      u.onerror = () => { clearInterval(keep); res(); };
       speechSynthesis.cancel();
       speechSynthesis.speak(u);
+      try { speechSynthesis.resume(); } catch {}
+      // Red de seguridad: si el navegador no responde, no colgar el turno
+      setTimeout(() => { clearInterval(keep); res(); }, 60000);
     });
     return 'system';
   })();
