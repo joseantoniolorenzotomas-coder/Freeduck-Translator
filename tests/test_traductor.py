@@ -402,6 +402,9 @@ def main():
           all(x in js for x in ("paintVoiceLoad", "__voiceLoad", "loadVoice('es',"))
           and 'id="voiceLoad"' in html
           and "pointerdown" in js and "volume: 0" in js)
+    check("micro-test",
+          'onclick="micTest()"' in html and "function micTest(" in js
+          and "getUserMedia" in js and "isSecureContext" in js)
     check("voz-natural-cableada",
           'type="module" src="voice-sherpa.js"' in html
           and "window.SherpaVoice" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8")

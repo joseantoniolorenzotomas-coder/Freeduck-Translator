@@ -845,7 +845,10 @@
       <div class="chat-card">
         <div class="chat-header">
           <h3>💬 Conversación</h3>
-          <button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 10px" onclick="clearConv()">Borrar</button>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 10px" onclick="micTest()">🎙 Probar micro</button>
+            <button class="btn btn-ghost" style="font-size:0.75rem;padding:4px 10px" onclick="clearConv()">Borrar</button>
+          </div>
         </div>
         <div class="chat-log" id="chatLog"></div>
       </div>
@@ -1340,8 +1343,14 @@ function startListen(side) {
     if (e.error === 'no-speech') {
       document.getElementById(`status${side.toUpperCase()}`).textContent = 'No se detectó voz';
       setTimeout(() => resetStatus(side), 2000);
-    } else if (e.error === 'not-allowed') {
-      toast('⚠️ Permiso de micrófono denegado. Actívalo en la configuración del navegador.', 5000);
+    } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      toast(window.isSecureContext
+        ? '⚠️ Micro bloqueado: dale permiso a este sitio (candado de la barra) y revisa el micro en los ajustes del sistema'
+        : '🔒 El micro exige HTTPS o localhost: no funciona en file:// ni en http:// con IP', 6000);
+    } else if (e.error === 'audio-capture') {
+      toast('🎤 No hay micrófono disponible o está ocupado por otra app', 5000);
+    } else if (e.error === 'network') {
+      toast('🌐 El dictado necesita internet (la voz se reconoce en la nube)', 5000);
     } else {
       toast(`⚠️ Error de micrófono: ${e.error}`, 4000);
     }
@@ -1416,6 +1425,59 @@ function setRecordingUI(side, isRecording) {
 function resetStatus(side) {
   const el = document.getElementById(`status${side.toUpperCase()}`);
   el.textContent = 'Pulsa para hablar';
+}
+
+/* Prueba de micrófono: pide permiso, mide el nivel 2 s y lo cuenta.
+   Distingue permiso denegado, contexto inseguro, falta de micro y micro mudo. */
+async function micTest() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    toast('Este navegador no da acceso al micrófono. Usa Chrome o Edge.', 4000);
+    return;
+  }
+  let stream = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    const name = (e && e.name) || '';
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+      toast(window.isSecureContext
+        ? '⚠️ Micro bloqueado: permite el micro para este sitio (candado de la barra) y revisa el ajuste de micro del sistema'
+        : '🔒 Abre por HTTPS o localhost: en file:// o http:// con IP el micro está prohibido', 6000);
+    } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+      toast('🎤 No se encontró ningún micrófono en este dispositivo', 4000);
+    } else if (name === 'NotReadableError' || name === 'AbortError') {
+      toast('🎤 El micro está ocupado por otra app. Ciérrala y repite.', 4000);
+    } else {
+      toast('🎤 Error de micro: ' + (name || 'desconocido'), 4000);
+    }
+    return;
+  }
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    const src = ctx.createMediaStreamSource(stream);
+    const an = ctx.createAnalyser();
+    an.fftSize = 512;
+    src.connect(an);
+    const data = new Uint8Array(an.frequencyBinCount);
+    const t0 = Date.now();
+    let peak = 0;
+    toast('🎙 Habla ahora… midiendo 2 segundos', 2500);
+    await new Promise(res => {
+      const iv = setInterval(() => {
+        an.getByteFrequencyData(data);
+        for (let i = 0; i < data.length; i++) if (data[i] > peak) peak = data[i];
+        if (Date.now() - t0 > 2000) { clearInterval(iv); res(); }
+      }, 100);
+    });
+    stream.getTracks().forEach(t => { try { t.stop(); } catch {} });
+    try { ctx.close(); } catch {}
+    toast(peak > 30
+      ? `🎙 Micro OK (nivel ${peak}/255). Si el dictado falla, será la red o el idioma.`
+      : '🔇 El micro no capta nada: mira que no esté silenciado ni tapado', 5000);
+  } catch {
+    try { stream.getTracks().forEach(t => { try { t.stop(); } catch {} }); } catch {}
+  }
 }
 
 /* ══════════════════════════════════════════════════════
