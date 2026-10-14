@@ -1,0 +1,11 @@
+# Freeduck-Translator — ejecución local con Docker
+# Vale para Windows, macOS y Linux con Docker Desktop instalado.
+# Uso:  docker compose up --build
+# Abrir: http://localhost:8901  (localhost cuenta como contexto seguro:
+#        valen micrófono, instalación PWA y voces offline tras descargarlas)
+services:
+  freeduck:
+    build: .
+    ports:
+      - "8901:80"
+    restart: unless-stopped

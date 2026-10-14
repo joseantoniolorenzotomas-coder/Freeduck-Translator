@@ -1,0 +1,19 @@
+Motor de traducción offline incluido en Freeduck-Translator.
+
+- Código: @browsermt/bergamot-translator 0.4.9
+  Origen: https://github.com/browsermt/bergamot-translator
+  Licencia: Mozilla Public License 2.0 (MPL-2.0)
+  Archivos: translator.js, worker/translator-worker.js,
+  worker/bergamot-translator-worker.js, worker/bergamot-translator-worker.wasm
+  (copias sin modificar del paquete npm).
+
+- Modelos: "Firefox Translations models" (Marian NMT, Marian/bergamot)
+  Origen: https://github.com/mozilla/firefox-translations-models
+  (registro actual en Google Cloud Storage de Mozilla)
+  Licencia del repositorio de modelos: MPL-2.0
+  Los modelos NO se incluyen en esta carpeta: se descargan bajo demanda
+  la primera vez (con conexión) y el navegador los guarda para usarlos
+  sin conexión. v1: pares es→en y en→es (base-memory, ~27 MB por sentido).
+
+Atribuciones requeridas por MPL-2.0: este archivo y la mención en la
+documentación del proyecto (Documentacion.md §8).

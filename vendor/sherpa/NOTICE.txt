@@ -1,0 +1,19 @@
+Voz natural offline: motor sherpa-onnx (WASM) + voces Piper.
+
+- Código: sherpa-onnx (Xiaomi), Apache License 2.0.
+  Origen: https://github.com/k2-fsa/sherpa-onnx (build WASM precompilado
+  oficial v1.13.8, variante simd).
+  Archivos (copias sin modificar): sherpa-onnx-wasm-main-tts.js/.wasm,
+  sherpa-onnx-tts.js, sherpa-worker.js (propio de Freeduck-Translator, adaptado del
+  ejemplo oficial), piper-setup.js (propio), piper-phonemize/
+  (piper-phonemize.js, piper-phonemize-wasm-main.js/.wasm/.data).
+
+- Voces (NO incluidas aquí; se descargan una vez y el navegador las guarda):
+  es_ES-sharvard-medium-int8 + en_US-amy-low-int8, convertidas por sherpa
+  desde Piper. Repositorio de voces Piper: licencia MIT.
+  Origen: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models
+  y https://huggingface.co/rhasspy/piper-voices
+  Datos de entrenamiento sharvard: CC-BY 3.0
+  (https://datashare.ed.ac.uk/handle/10283/574).
+
+Atribución: este archivo + Documentacion.md §8.

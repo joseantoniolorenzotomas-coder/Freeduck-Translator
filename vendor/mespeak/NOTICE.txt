@@ -1,0 +1,13 @@
+Voz offline incluida en Freeduck-Translator (voz robótica).
+
+- Código y voces: meSpeak.js 2.0.7 (eSpeak portado a JavaScript)
+  Autor: Norbert Landsteiner, mass:werk — https://www.masswerk.at/mespeak/
+  Licencia: GNU General Public License v3 (GPL-3.0).
+  ¡IMPORTANTE! La GPL-3.0 es copyleft fuerte: al distribuir este código
+  junto con la app, el conjunto distribuido debe cumplir la GPL-3.0
+  (acceso al fuente —incluido aquí— y misma licencia para la obra
+  combinada). La licencia del proyecto Freeduck-Translator sigue pendiente de decidir;
+  ver MEMORY.md. No se puede distribuir esta carpeta bajo una licencia
+  incompatible con la GPL-3.0.
+  Archivos (copias sin modificar del ZIP oficial mespeak.zip):
+  mespeak.js, mespeak-core.js, voices/es.json, voices/en/en-us.json.

@@ -1,0 +1,59 @@
+{
+  "name": "freeduck-translator",
+  "productName": "Freeduck-Translator",
+  "version": "0.1.0",
+  "description": "Traductor gratuito. Esta versión requiere conexión a internet.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac dmg --x64 --arm64",
+    "dist:win": "electron-builder --win nsis --x64",
+    "dist": "npm run dist:mac && npm run dist:win"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.freeducktranslator.app",
+    "productName": "Freeduck-Translator",
+    "files": [
+      {
+        "from": "..",
+        "to": ".",
+        "filter": [
+          "index.html",
+          "manifest.webmanifest",
+          "sw.js",
+          "offline.js",
+          "models/**/*",
+          "vendor/**/*",
+          "img/**/*"
+        ]
+      },
+      "main.js",
+      "package.json",
+      "icon.png",
+      "icon.icns",
+      "icon.ico"
+    ],
+    "mac": {
+      "icon": "icon.icns",
+      "target": ["dmg"],
+      "category": "public.app-category.education"
+    },
+    "win": {
+      "icon": "icon.ico",
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Freeduck-Translator"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

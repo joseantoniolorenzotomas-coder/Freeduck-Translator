@@ -1,0 +1,7 @@
+# No entra en la imagen Docker (pesaría y no hace falta para servir la app)
+electron/
+tests/
+opencode/
+node_modules/
+*.log
+.DS_Store

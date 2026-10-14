@@ -1,0 +1,10 @@
+# Generados y locales (no van a GitHub)
+electron/dist/
+electron/node_modules/
+node_modules/
+*.log
+.DS_Store
+# Herramientas del entorno de desarrollo
+opencode/
+# Descargas publicadas (se regeneran; pesan ~94 MB)
+descargas/
