@@ -6,5 +6,3 @@ node_modules/
 .DS_Store
 # Herramientas del entorno de desarrollo
 opencode/
-# Descargas publicadas (se regeneran; pesan ~94 MB)
-descargas/
