@@ -74,10 +74,8 @@ No se debe anunciar una descarga como universal si no funciona en todos los disp
 - **Aviso obligatorio:** esta versión requiere conexión a internet para
   traducir y para la voz (motor online). El service worker solo acelera la
   apertura; no la convierte en offline.
-- La propia página trae la sección «Descargas» (botón ⬇ Descargar bajo la
-  voz por turnos): instalar como app o bajar el ZIP `descargas/*.zip` con la
-  app completa. Si cambia la app, hay que regenerar el ZIP y actualizar la
-  versión y el tamaño mostrados.
+- La propia página trae la sección «Descargas»: instalar como app y guía
+  de uso del modo offline.
 
 ### 5.3. Docker (probar igual en Windows, macOS y Linux)
 - Requiere Docker Desktop instalado. En la carpeta: `docker compose up --build`.

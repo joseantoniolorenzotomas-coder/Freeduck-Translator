@@ -6,3 +6,6 @@ node_modules/
 .DS_Store
 # Herramientas del entorno de desarrollo
 opencode/
+# Runtimes STT que GitHub marca como secretos: los sirve el SW desde CDN
+vendor/stt/transformers.min.js
+vendor/stt/ort-wasm-simd-threaded.asyncify.wasm

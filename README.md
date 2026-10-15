@@ -48,7 +48,6 @@ vendor/               ← bergamot, mespeak (GPL-3.0), sherpa (Apache-2.0), koko
 img/                  ← Logo, fondo e iconos PWA
 electron/             ← Ejecutables de escritorio (npm run dist)
 tests/                ← Suite de pruebas
-descargas/            ← ZIP publicado en la web
 Documentacion.md, MEMORY.md, AGENTS.md, constitution.md
 ```
 

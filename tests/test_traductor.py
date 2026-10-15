@@ -254,28 +254,15 @@ def main():
     check("pwa-aviso-internet",
           "Requiere conexi" in html or "requiere internet" in html)
 
-    # ---------- 6d. sección de descargas ----------
+    # ---------- 6d. sección de descargas (sin ZIP: el offline va en la app) ----------
     check("descargas-section", 'id="descargas"' in html)
     check("download-button",
           bool(re.search(r'<a[^>]+id="dlBtn"[^>]+href="#descargas"', html)))
-    import zipfile
-    zips = sorted((ROOT / "descargas").glob("*.zip")) if (ROOT / "descargas").exists() else []
-    check("zip-existe", len(zips) > 0, str([z.name for z in zips]))
-    if zips:
-        z = zipfile.ZipFile(zips[0])
-        nombres = z.namelist()
-        check("zip-contenido",
-              {"index.html", "manifest.webmanifest", "sw.js"} <= set(nombres)
-              and any(n.startswith("img/") for n in nombres)
-              and any(n.startswith("models/") and n.endswith(".gz") for n in nombres)
-              and "models/registry.json" in nombres
-              and not any("/." in n or n.startswith(".") for n in nombres),
-              f"{len(nombres)} archivos")
-        msize = re.search(r"([\d,]+)\s*MB", html)
-        real_mb = zips[0].stat().st_size / (1024 * 1024)
-        check("zip-size-visible",
-              bool(msize) and abs(float(msize.group(1).replace(",", ".")) - real_mb) / real_mb < 0.2,
-              f"real: {real_mb:.1f} MB")
+    _hay_zip = (ROOT / "descargas").exists() and bool(list((ROOT / "descargas").glob("*.zip")))
+    check("sin-zip",
+          "Descargar archivos" not in html
+          and "freeduck-translator-pwa-v0.1.zip" not in html
+          and not _hay_zip)
 
     # ---------- 6e. ejecutable Electron ----------
     epkg_path = ROOT / "electron" / "package.json"
@@ -332,8 +319,11 @@ def main():
     check("offline-solo-es-en",
           "OFFLINE_PAIRS" in off and "es" in off and "en" in off)
     check("offline-bar",
-          all(x in html for x in ("offlineBar", "offlineStatus", "offlineBtn",
-                                  "refreshOfflineBar", "offlineAction"))
+          all(x in html for x in ("offlineBar", "offlineStatus",
+                                  "refreshOfflineBar", "dlAllBtn", "wipeBtn",
+                                  "downloadAllOffline", "wipeAllOffline"))
+          and all(("function " + f + "(") in js for f in
+                  ("downloadAllOffline", "wipeAllOffline"))
           and 'type="module" src="offline.js"' in html)
     check("offline-en-traductor",
           "Offline.isReady" in js and "Offline.translate" in js
@@ -438,10 +428,11 @@ def main():
               ("voices/es/es_ES-sharvard-medium.onnx", "voices/es/tokens.txt",
                "voices/en/en_US-amy-low.onnx", "voices/en/tokens.txt")))
     check("voz-kokoro-ui",
-          all(x in html for x in ("kokoroStatus", "kokoroBtn", "refreshKokoro", "kokoroAction"))
+          all(x in html for x in ("kokoroStatus", "refreshKokoro"))
+          and "kokoroBtn" not in html and "kokoroAction" not in js
           and 'value="natural"' in html)
     check("voz-sherpa-etapas",
-          "Generando prueba" in js or "warmup" in js)
+          "Descargando todo" in js and "warmup" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8"))
     check("servidor-local", (ROOT / "servir.py").exists()
           and "Cross-Origin-Embedder-Policy" in (ROOT / "servir.py").read_text(encoding="utf-8"))
 
@@ -512,17 +503,25 @@ def main():
     check("estado-antes-de-init", not tdz_mal and pos_init != -1,
           "" if not tdz_mal else f"declarados tarde: {tdz_mal}")
     check("dictado-offline-ui",
-          all(x in html for x in ("sttStatus", "sttBtn", "refreshSTT", "sttAction"))
+          all(x in html for x in ("sttStatus", "refreshSTT"))
+          and "sttBtn" not in html and "sttAction" not in js
           and all(("function " + f + "(") in js for f in
                   ("startListenOffline", "stopLocalConv", "talkOffline",
                    "stopLocalTalk", "translateAuto", "talkAfterSpeech"))
           and "freeduck:stt-ready" in js)
+    import subprocess as _sp
+    def _ignorado(ruta):
+        try:
+            return _sp.run(["git", "check-ignore", "-q", ruta], cwd=str(ROOT),
+                           capture_output=True).returncode == 0
+        except Exception:
+            return False
     check("dictado-offline-motor",
           all((ROOT / f).exists() for f in
               ("vendor/stt/ort-wasm-simd-threaded.asyncify.mjs",
                "vendor/stt/NOTICE.txt", "voice-whisper.js"))
-          and not (ROOT / "vendor/stt/transformers.min.js").exists()
-          and not (ROOT / "vendor/stt/ort-wasm-simd-threaded.asyncify.wasm").exists()
+          and _ignorado("vendor/stt/transformers.min.js")
+          and _ignorado("vendor/stt/ort-wasm-simd-threaded.asyncify.wasm")
           and "Xenova/whisper-tiny" in (ROOT / "voice-whisper.js").read_text(encoding="utf-8")
           and "MediaRecorder" in (ROOT / "voice-whisper.js").read_text(encoding="utf-8"))
     check("stt-runtime-por-cdn",

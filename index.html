@@ -279,8 +279,8 @@
   .offline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
   .offline-dot.ready { background: var(--success); box-shadow: 0 0 8px var(--success); }
   .offline-dot.busy { background: var(--warn); animation: pulse 1s infinite; }
-  #offlineBtn { min-height: 44px; }
-  #offlineBtn:disabled { opacity: 0.55; cursor: wait; }
+  #dlAllBtn { padding: 14px 34px; font-size: 1rem; min-height: 52px; text-decoration: none; }
+  #dlAllBtn:disabled { opacity: 0.55; cursor: wait; }
   .voice-pick { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
   .voice-pick .speaker-lang { width: auto; padding: 10px 14px; font-size: 0.82rem; }
   #voiceTestBtn { min-height: 44px; }
@@ -684,12 +684,12 @@
       <a class="btn btn-primary" id="dlBtn" href="#descargas" title="Ir a las descargas">⬇ Descargar</a>
     </div>
 
-    <!-- Motor offline (texto ES↔EN sin conexión, descargando el modelo una vez) -->
+    <!-- Motor offline (texto, voces y dictado ES/EN sin conexión tras descarga única) -->
     <div class="offline-bar" id="offlineBar">
       <span class="offline-dot" id="offlineDot"></span>
       <div class="voice-info">
         <span class="voice-status" id="offlineStatus">Motor offline: cargando…</span>
-        <span class="voice-sub" id="offlineHint">Voz robótica offline incluida para ES/EN. El dictado (micrófono) sigue necesitando internet.</span>
+        <span class="voice-sub" id="offlineHint">Texto, voces y dictado ES/EN funcionan sin conexión tras la descarga única de abajo.</span>
         <span class="voice-sub" id="offlineReady">Sin conexión listo: comprobando…</span>
         <span class="voice-sub" id="voiceEngine">Voz: natural (principal)</span>
         <span class="voice-sub" id="voiceLoad">Robótica: ES … / EN …</span>
@@ -705,13 +705,15 @@
       </div>
       <div class="voice-pick">
         <span class="voice-sub" id="kokoroStatus">Voz natural: comprobando…</span>
-        <button class="btn btn-outline" id="kokoroBtn" onclick="kokoroAction()" style="display:none">⬇ Descargar voz natural</button>
       </div>
       <div class="voice-pick">
         <span class="voice-sub" id="sttStatus">Dictado offline: comprobando…</span>
-        <button class="btn btn-outline" id="sttBtn" onclick="sttAction()" style="display:none">⬇ Descargar dictado</button>
       </div>
-      <button class="btn btn-outline" id="offlineBtn" onclick="offlineAction()" style="display:none">Descargar modelo</button>
+      <span class="voice-sub" id="dlAllStatus">Todo lo offline: ~140 MB una vez (modelos, voces y dictado ES/EN).</span>
+      <div class="voice-pick">
+        <button class="btn btn-primary" id="dlAllBtn" onclick="downloadAllOffline()">⬇ Descargar todo offline</button>
+        <button class="btn btn-ghost" id="wipeBtn" onclick="wipeAllOffline()">Borrar todo</button>
+      </div>
     </div>
 
     <div class="history-wrap" id="histWrap" style="display:none">
@@ -875,10 +877,9 @@
         <h3>Cómo descargarlo y usarlo</h3>
         <ol>
           <li><strong>Instalar como app (recomendado):</strong> abre esta página en Chrome (móvil u ordenador) → menú ⋮ → «Instalar Freeduck-Translator» o «Añadir a pantalla de inicio». Aparecerá el icono del pato con tus apps.</li>
-          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa «Descargar modelo» (los dos sentidos ES→EN y EN→ES), «Descargar voz natural» (los dos idiomas) y «Descargar dictado» (vale para ES+EN). La línea «Sin conexión listo» debe quedar toda en ✓.</li>
+          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa <strong>⬇ Descargar todo offline</strong> y espera a que la línea «Sin conexión listo» quede toda en ✓.</li>
           <li><strong>Usarlo sin conexión:</strong> activa el modo avión y dicta o escribe para traducir ES↔EN y escuchar. El dictado sin red usa el reconocedor local (más lento la primera vez).</li>
           <li><strong>Conversación:</strong> cada persona pulsa su micrófono (Persona A / Persona B); la app traduce y habla sola con la voz elegida. Con «Cambio automático», los idiomas se alternan solos.</li>
-          <li><strong>Archivo ZIP:</strong> el botón «Descargar archivos» baja la app completa para guardarla o subirla a tu propio hosting (descomprime y sírvela por HTTP).</li>
         </ol>
       </div>
       <div class="dl-card">
@@ -892,17 +893,11 @@
         </ol>
       </div>
       <div class="dl-card">
-        <div class="dl-emoji">📦</div>
-        <h3>Descargar archivos</h3>
-        <p>Versión 0.3-voz · ZIP con la app completa (HTML + iconos + fondo). Descomprime y sírvela por HTTP(S) o súbela a tu hosting.</p>
-        <a class="btn btn-primary" href="descargas/freeduck-translator-pwa-v0.1.zip" download>⬇ freeduck-translator-pwa-v0.1.zip · 94 MB</a>
-      </div>
-      <div class="dl-card">
         <div class="dl-emoji">⚠️</div>
         <h3>Requisitos</h3>
         <ul>
           <li>Navegador moderno (Chrome o Edge recomendados).</li>
-          <li class="dl-req">Conexión a internet obligatoria para traducir y para la voz en esta versión.</li>
+          <li class="dl-req">Internet solo la primera vez (para descargar lo offline). Después, ES↔EN funciona en modo avión.</li>
           <li>Micrófono para el dictado (el navegador pedirá permiso).</li>
         </ul>
       </div>
@@ -1967,8 +1962,7 @@ async function refreshOfflineBar() {
   const dot = document.getElementById('offlineDot');
   const status = document.getElementById('offlineStatus');
   const hint = document.getElementById('offlineHint');
-  const btn = document.getElementById('offlineBtn');
-  if (!dot || !status || !btn) return;
+  if (!dot || !status) return;
   const from = document.getElementById('srcLang').value;
   const to = document.getElementById('tgtLang').value;
 
@@ -1980,7 +1974,6 @@ async function refreshOfflineBar() {
       offlineMode = 'unavailable';
       dot.className = 'offline-dot';
       status.textContent = 'Motor offline no disponible en este navegador';
-      btn.style.display = 'none';
     }
     return;
   }
@@ -1989,71 +1982,102 @@ async function refreshOfflineBar() {
     dot.className = 'offline-dot';
     status.textContent = 'Modelo offline disponible solo para ES↔EN por ahora';
     hint.textContent = 'El resto de idiomas sigue necesitando conexión.';
-    btn.style.display = 'none';
     return;
   }
   dot.className = 'offline-dot busy';
   status.textContent = 'Comprobando modelo offline…';
-  btn.style.display = 'none';
   let ready = false;
   try { ready = await Offline.isReady(from, to); } catch { ready = false; }
   // Evita carreras si se cambió de idioma durante la comprobación
   if (document.getElementById('srcLang').value !== from ||
       document.getElementById('tgtLang').value !== to) return;
-  hint.textContent = 'Voz robótica offline incluida para ES/EN; el dictado (micrófono) sigue necesitando internet.';
+  hint.textContent = 'Texto, voces y dictado ES/EN funcionan sin conexión tras la descarga única.';
   if (ready) {
     offlineMode = 'ready';
     dot.className = 'offline-dot ready';
     status.textContent = `✓ Modelo ${voiceLangName(from)}→${voiceLangName(to)} listo: este sentido funciona sin conexión`;
-    btn.textContent = 'Borrar modelo';
-    btn.style.display = '';
-    btn.disabled = false;
   } else {
     offlineMode = 'missing';
     dot.className = 'offline-dot';
-    status.textContent = `Modelo ${voiceLangName(from)}→${voiceLangName(to)} no descargado (~27 MB, una sola vez)`;
-    btn.textContent = 'Descargar modelo';
-    btn.style.display = '';
-    btn.disabled = false;
+    status.textContent = `Modelo ${voiceLangName(from)}→${voiceLangName(to)} no descargado (pulsa «Descargar todo offline»)`;
   }
   if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
-async function offlineAction() {
-  const btn = document.getElementById('offlineBtn');
-  const status = document.getElementById('offlineStatus');
-  const from = document.getElementById('srcLang').value;
-  const to = document.getElementById('tgtLang').value;
+/* Descarga TODO lo offline de una vez (modelos ES↔EN, voces ES+EN y
+   dictado): ~140 MB una sola vez, con progreso global. Sin fases. */
+let dlAllBusy = false;
 
-  if (offlineMode === 'ready') {
-    btn.disabled = true;
-    try {
-      await Offline.remove(from, to);
-      toast('Modelo offline borrado. Se descargará de nuevo cuando lo pidas.');
-    } catch {
-      toast('❌ No se pudo borrar el modelo', 4000);
-    }
-    refreshOfflineBar();
+async function downloadAllOffline() {
+  if (dlAllBusy) return;
+  // Espera a los motores (módulos diferidos): hasta 30 s, no fallo directo.
+  let motoresOk = false;
+  for (let i = 0; i < 60; i++) {
+    if (window.Offline && window.SherpaVoice && window.LocalSTT) { motoresOk = true; break; }
+    await new Promise(r => setTimeout(r, 500));
+  }
+  if (!motoresOk || !('caches' in window)) {
+    toast('⚠️ Tu navegador no soporta el modo offline. Usa Chrome o Edge.', 5000);
     return;
   }
-  if (offlineMode !== 'missing') return;
-  offlineMode = 'busy';
+  dlAllBusy = true;
+  const btn = document.getElementById('dlAllBtn');
+  const st = document.getElementById('dlAllStatus');
   btn.disabled = true;
-  document.getElementById('offlineDot').className = 'offline-dot busy';
+
+  const show = (i, n, label, loaded, total) => {
+    const mb = (loaded / 1048576).toFixed(0);
+    st.textContent = total
+      ? `Descargando todo ${i}/${n}: ${label}… ${mb} de ${(total / 1048576).toFixed(0)} MB (${Math.round(loaded / total * 100)}%)`
+      : `Descargando todo ${i}/${n}: ${label}… ${mb} MB`;
+  };
+  const tasks = [
+    ['modelo ES→EN', (cb) => Offline.download('es', 'en', (got, total) => cb(got, total))],
+    ['modelo EN→ES', (cb) => Offline.download('en', 'es', (got, total) => cb(got, total))],
+    ['voz natural ES', (cb) => SherpaVoice.download('es', (ev) => cb(ev.loaded || 0, ev.total || 0, ev.file))],
+    ['voz natural EN', (cb) => SherpaVoice.download('en', (ev) => cb(ev.loaded || 0, ev.total || 0, ev.file))],
+    ['dictado offline', (cb) => LocalSTT.download((ev) => cb(ev.loaded || 0, ev.total || 0, ev.file))],
+  ];
+  const fallos = [];
+  for (let i = 0; i < tasks.length; i++) {
+    const [label, run] = tasks[i];
+    try {
+      await run((loaded, total, file) => show(i + 1, tasks.length, file || label, loaded, total));
+    } catch (e) {
+      fallos.push(`${label}: ${String((e && e.message) || e).slice(0, 80)}`);
+    }
+  }
+  dlAllBusy = false;
+  btn.disabled = false;
+  st.textContent = 'Todo lo offline: ~140 MB una vez (modelos, voces y dictado ES/EN).';
+  refreshOfflineBar();
+  refreshKokoro();
+  refreshSTT();
+  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
+  if (!fallos.length) toast('✓ Todo descargado. Ya funciona sin conexión.', 6000);
+  else toast('⚠️ Algunas descargas fallaron: ' + fallos.join(' · '), 8000);
+}
+
+async function wipeAllOffline() {
+  if (!window.confirm('¿Borrar todas las descargas offline (modelos, voces y dictado)?')) return;
   try {
-    await Offline.download(from, to, (got, total) => {
-      const mb = (got / 1048576).toFixed(1);
-      status.textContent = total
-        ? `Descargando modelo… ${mb} de ${(total / 1048576).toFixed(0)} MB (${Math.round(got / total * 100)}%)`
-        : `Descargando modelo… ${mb} MB`;
-    });
-    toast('✓ Modelo listo. El texto ES↔EN ya funciona sin conexión.', 5000);
-  } catch (e) {
-    if (e && e.message === 'GZIP') toast('⚠️ Tu navegador no descomprime modelos. Usa Chrome o Edge.', 5000);
-    else if (e && e.message === 'REGISTRY') toast('❌ Sin conexión y sin lista de modelos en caché.', 5000);
-    else toast('❌ No se pudo descargar el modelo. Comprueba la conexión.', 5000);
+    if (window.Offline) {
+      await Offline.remove('es', 'en').catch(() => {});
+      await Offline.remove('en', 'es').catch(() => {});
+    }
+    if (window.SherpaVoice) {
+      await SherpaVoice.remove('es').catch(() => {});
+      await SherpaVoice.remove('en').catch(() => {});
+    }
+    if (window.LocalSTT) await LocalSTT.remove().catch(() => {});
+    toast('Descargas offline borradas.');
+  } catch {
+    toast('❌ No se pudo borrar todo', 4000);
   }
   refreshOfflineBar();
+  refreshKokoro();
+  refreshSTT();
+  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2063,8 +2087,7 @@ async function offlineAction() {
 
 async function refreshKokoro() {
   const st = document.getElementById('kokoroStatus');
-  const btn = document.getElementById('kokoroBtn');
-  if (!st || !btn) return;
+  if (!st) return;
   const to = document.getElementById('tgtLang').value;
 
   if (!('caches' in window) || !window.SherpaVoice) {
@@ -2074,79 +2097,30 @@ async function refreshKokoro() {
     } else {
       kokoroMode = 'unavailable';
       st.textContent = 'Voz natural no disponible en este navegador';
-      btn.style.display = 'none';
     }
     return;
   }
   if (!SherpaVoice.isSupported(to)) {
     kokoroMode = 'unsupported';
     st.textContent = 'Voz natural disponible para ES/EN por ahora';
-    btn.style.display = 'none';
     return;
   }
   st.textContent = 'Voz natural: comprobando…';
-  btn.style.display = 'none';
   let ready = false;
   try { ready = await SherpaVoice.isReady(to); } catch { ready = false; }
   if (document.getElementById('tgtLang').value !== to) return;
   if (ready) {
     kokoroMode = 'ready';
     st.textContent = `✓ Voz natural ${voiceLangName(to)} lista (sin conexión)`;
-    btn.textContent = 'Borrar voz natural';
-    btn.style.display = '';
-    btn.disabled = false;
   } else {
     kokoroMode = 'missing';
-    st.textContent = `Voz natural ${voiceLangName(to)}: sin descargar (~${to === 'es' ? '22' : '19'} MB, una vez)`;
-    btn.textContent = '⬇ Descargar voz natural';
-    btn.style.display = '';
-    btn.disabled = false;
+    st.textContent = `Voz natural ${voiceLangName(to)}: sin descargar (pulsa «Descargar todo offline»)`;
   }
   if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
-async function kokoroAction() {
-  const btn = document.getElementById('kokoroBtn');
-  const st = document.getElementById('kokoroStatus');
-  const to = document.getElementById('tgtLang').value;
-
-  if (kokoroMode === 'ready') {
-    btn.disabled = true;
-    try {
-      await SherpaVoice.remove(to);
-      toast('Voz natural borrada. Se descargará de nuevo cuando la pidas.');
-    } catch {
-      toast('❌ No se pudo borrar la voz', 4000);
-    }
-    refreshKokoro();
-    return;
-  }
-  if (kokoroMode !== 'missing') return;
-  kokoroMode = 'busy';
-  btn.disabled = true;
-  try {
-    await SherpaVoice.download(to, (ev) => {
-      if (ev.status === 'initiate') st.textContent = `Preparando ${ev.file || 'modelo'}…`;
-      else if (ev.status === 'done') st.textContent = `✓ ${ev.file || 'archivo'} listo`;
-      else if (ev.status === 'warmup') st.textContent = 'Generando prueba de voz (la primera vez tarda)…';
-      else if (ev.status === 'progress' || ev.total) {
-        const mb = (ev.loaded / 1048576).toFixed(0);
-        st.textContent = ev.total
-          ? `Descargando ${ev.file || 'voz'}… ${mb} de ${(ev.total / 1048576).toFixed(0)} MB (${Math.round(ev.loaded / ev.total * 100)}%)`
-          : `Descargando ${ev.file || 'voz'}… ${mb} MB`;
-      } else st.textContent = `Descargando voz… ${ev.file || ''}`;
-    });
-    st.textContent = 'Generando prueba de voz…';
-    toast('✓ Voz natural lista. Ya habla sin conexión.', 5000);
-  } catch (e) {
-    const msg = String((e && e.message) || e || '').slice(0, 120);
-    toast(`❌ No se pudo descargar la voz${msg ? ': ' + msg : '. Comprueba la conexión.'}`, 6000);
-  }
-  refreshKokoro();
-}
-
 /* Resumen de lo listo para usar sin conexión (texto y voces, ambos
-   sentidos). Para que valga, hay que pulsar los botones de descarga
+   sentidos). Para que valga, hay que pulsar «Descargar todo offline»
    DENTRO de la app con internet; bajar el ZIP no prepara nada. */
 async function refreshReadyMatrix() {
   const el = document.getElementById('offlineReady');
@@ -2179,8 +2153,7 @@ async function refreshReadyMatrix() {
 
 async function refreshSTT() {
   const st = document.getElementById('sttStatus');
-  const btn = document.getElementById('sttBtn');
-  if (!st || !btn) return;
+  if (!st) return;
 
   if (!('caches' in window) || !window.LocalSTT) {
     if (sttTries++ < 40) {
@@ -2189,7 +2162,6 @@ async function refreshSTT() {
     } else {
       sttMode = 'unavailable';
       st.textContent = 'Dictado offline no disponible en este navegador';
-      btn.style.display = 'none';
     }
     return;
   }
@@ -2198,55 +2170,10 @@ async function refreshSTT() {
   if (ready) {
     sttMode = 'ready';
     st.textContent = '✓ Dictado offline listo (ES/EN, sin conexión)';
-    btn.textContent = 'Borrar dictado';
-    btn.style.display = '';
-    btn.disabled = false;
   } else {
     sttMode = 'missing';
-    st.textContent = 'Dictado offline: sin descargar (~42 MB, una vez, vale ES+EN)';
-    btn.textContent = '⬇ Descargar dictado';
-    btn.style.display = '';
-    btn.disabled = false;
+    st.textContent = 'Dictado offline: sin descargar (pulsa «Descargar todo offline»)';
   }
-}
-
-async function sttAction() {
-  const btn = document.getElementById('sttBtn');
-  const st = document.getElementById('sttStatus');
-
-  if (sttMode === 'ready') {
-    btn.disabled = true;
-    try {
-      await LocalSTT.remove();
-      toast('Dictado offline borrado. Se descargará de nuevo cuando lo pidas.');
-    } catch {
-      toast('❌ No se pudo borrar el dictado', 4000);
-    }
-    refreshSTT();
-    if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
-    return;
-  }
-  if (sttMode !== 'missing') return;
-  sttMode = 'busy';
-  btn.disabled = true;
-  try {
-    await LocalSTT.download((ev) => {
-      if (ev.status === 'initiate') st.textContent = `Preparando ${ev.file || 'modelo'}…`;
-      else if (ev.status === 'done') st.textContent = `✓ ${ev.file || 'archivo'} listo`;
-      else if (ev.status === 'progress' || ev.total) {
-        const mb = (ev.loaded / 1048576).toFixed(0);
-        st.textContent = ev.total
-          ? `Descargando dictado… ${mb} de ${(ev.total / 1048576).toFixed(0)} MB (${Math.round(ev.loaded / ev.total * 100)}%)`
-          : `Descargando dictado… ${mb} MB`;
-      } else st.textContent = `Descargando dictado… ${ev.file || ''}`;
-    });
-    toast('✓ Dictado listo. Ya puedes dictar sin conexión (ES/EN).', 5000);
-  } catch (e) {
-    const msg = String((e && e.message) || e || '').slice(0, 120);
-    toast(`❌ No se pudo descargar el dictado${msg ? ': ' + msg : '. Comprueba la conexión.'}`, 6000);
-  }
-  refreshSTT();
-  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 /* ══════════════════════════════════════════════════════

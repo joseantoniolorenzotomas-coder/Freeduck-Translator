@@ -9,6 +9,5 @@ COPY index.html manifest.webmanifest sw.js offline.js voice-kokoro.js /usr/share
 COPY models/ /usr/share/nginx/html/models/
 COPY vendor/ /usr/share/nginx/html/vendor/
 COPY img/ /usr/share/nginx/html/img/
-COPY descargas/ /usr/share/nginx/html/descargas/
 
 EXPOSE 80

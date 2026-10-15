@@ -18,7 +18,7 @@ const CDN_FALLBACK = {
   '/vendor/stt/ort-wasm-simd-threaded.asyncify.wasm': ORT_WASM_CDN,
 };
 
-const CACHE = 'freeduck-v21';
+const CACHE = 'freeduck-v24';
 const ASSETS = [
   './',
   './index.html',
@@ -76,6 +76,9 @@ self.addEventListener('fetch', (event) => {
   // fuentes siempre van a la red.
   if (url.origin !== location.origin) return;
   // Runtimes que no viajan en git: primero caché, luego local, luego CDN.
+  // OJO: la respuesta del CDN se reempaqueta como misma origin; si se
+  // devuelve tal cual, el navegador la trata como script cruzado y el CSP
+  // la bloquea.
   const cdnUrl = CDN_FALLBACK[url.pathname];
   if (cdnUrl) {
     event.respondWith(
@@ -86,11 +89,13 @@ self.addEventListener('fetch', (event) => {
           return res;
         }
         throw new Error('HTTP ' + res.status);
-      }).catch(() => fetch(cdnUrl).then((res) => {
+      }).catch(() => fetch(cdnUrl).then(async (res) => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(event.request, copy));
-        return res;
+        const buf = await res.arrayBuffer();
+        const ctype = url.pathname.endsWith('.wasm') ? 'application/wasm' : 'application/javascript';
+        const same = new Response(buf, { status: 200, headers: { 'Content-Type': ctype } });
+        caches.open(CACHE).then((c) => c.put(event.request, same.clone()));
+        return same;
       })))
     );
     return;
