@@ -1253,7 +1253,7 @@ async function translateText(text, fromCode, toCode) {
   const from = CODES[fromCode];
   const to   = CODES[toCode];
   const params = new URLSearchParams({ q: text, langpair: `${from}|${to}` });
-  const r = await fetch(`${MYMEMORY_URL}?${params}`, { signal: AbortSignal.timeout(15000) });
+  const r = await fetch(`${MYMEMORY_URL}?${params}`, { signal: AbortSignal.timeout(4000) });
   const d = await r.json();
   if (d.responseStatus === 429) throw new Error('LIMIT');
   if (d.responseStatus !== 200 && d.responseStatus !== 206) throw new Error(d.responseMessage || 'API error');
