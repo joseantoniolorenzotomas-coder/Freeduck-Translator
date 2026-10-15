@@ -118,6 +118,13 @@ window.SherpaVoice = {
   async download(lang, onProgress) {
     await ensurePhonemize();
     await ensureWorker(lang, onProgress);
+    // Calentamiento (una vez): la primera inferencia compila el motor y
+    // tarda; mejor esperar aquí con aviso que en el primer uso.
+    // Si falla, no se anula la descarga: se reintenta al hablar.
+    if (onProgress) onProgress({ status: 'warmup' });
+    try {
+      await SherpaVoice.speak(lang === 'en' ? 'Hello.' : 'Hola.', lang, { silent: true });
+    } catch {}
   },
   async remove(lang) {
     const entry = workers[lang];
@@ -127,15 +134,14 @@ window.SherpaVoice = {
     }
     clearFlag(lang);
   },
-  async speak(text, lang) {
+  async speak(text, lang, opts) {
     await ensurePhonemize();
     await ensureWorker(lang);
     const entry = workers[lang];
     const sentences = piperPhonemize(String(text).slice(0, 600), VOICES[lang].phoneme);
     const codepoints = (sentences || []).filter((s) => s && s.length > 0);
     if (!codepoints.length) throw new Error('PHONEMIZE');
-    const audio = await new Promise((resolve, reject) => {
-      const to = setTimeout(() => reject(new Error('TIMEOUT')), 180000);
+    const audio = await new Promise((resolve, reject) => {      const to = setTimeout(() => reject(new Error('TIMEOUT')), 180000);
       const prev = entry.worker.onmessage;
       entry.worker.onmessage = (e) => {
         const d = e.data || {};
@@ -157,6 +163,7 @@ window.SherpaVoice = {
         genConfig: { phonemeCodepoints: codepoints, sid: 0, speed: 1.0 },
       });
     });
+    if (opts && opts.silent) return true;
     return playSamples(audio.samples, audio.sampleRate);
   },
   stop() {

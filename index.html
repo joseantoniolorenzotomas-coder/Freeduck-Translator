@@ -701,6 +701,7 @@
           <option value="system">Voz: 🔊 sistema</option>
         </select>
         <button class="btn btn-outline" id="voiceTestBtn" onclick="voiceTest()" title="Escuchar una muestra con la voz elegida">🔊 Probar voz</button>
+        <button class="btn btn-ghost" id="speakerTestBtn" onclick="speakerTest()" title="Pitar sin motores: si no suena, el problema es tu dispositivo">🔔 Altavoz</button>
       </div>
       <div class="voice-pick">
         <span class="voice-sub" id="kokoroStatus">Voz natural: comprobando…</span>
@@ -1318,6 +1319,33 @@ function voiceTest() {
     ? 'this is a voice test, duck!'
     : 'esta es una prueba de voz, duck!';
   speakText(sample, lang).then(showVoiceEngine);
+}
+
+/* Prueba de altavoz: pitido puro sin motores de voz. Si no suena, el
+   problema es del dispositivo (volumen, silencio, Bluetooth), no de la app. */
+function speakerTest() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx();
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const t0 = ctx.currentTime;
+    [0, 0.35, 0.7].forEach((dt) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, t0 + dt);
+      g.gain.exponentialRampToValueAtTime(0.5, t0 + dt + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.3);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t0 + dt);
+      o.stop(t0 + dt + 0.32);
+    });
+    toast('🔔 Si oíste 3 pitidos, tu altavoz va: el problema es el motor de voz', 5000);
+  } catch {
+    toast('🔇 Ni el pitido suena: revisa volumen, silencio y Bluetooth', 5000);
+  }
 }
 
 /* ══════════════════════════════════════════════════════

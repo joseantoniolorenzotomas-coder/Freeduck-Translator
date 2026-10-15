@@ -391,7 +391,7 @@ def main():
           and 'id="voiceTestBtn"' in html)
     check("voz-funciones",
           all(("function " + f + "(") in js for f in
-              ("voicePref", "voicePrefChange", "showVoiceEngine", "voiceTest")))
+              ("voicePref", "voicePrefChange", "showVoiceEngine", "voiceTest", "speakerTest")))
     check("voz-devuelve-motor",
           "resolve('offline')" not in js and "return 'natural'" in js
           and "return 'robot'" in js and "return 'system'" in js)
