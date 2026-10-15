@@ -40,7 +40,7 @@ function nombreOrt(ruta) {
 // ─────────────────────────────────────────────────────────────
 // Subir este número es lo que publica una versión nueva: al activarse borra
 // las cachés viejas.
-const CACHE = 'freeduck-v32';
+const CACHE = 'freeduck-v34';
 
 const ASSETS = [
   './',
@@ -173,13 +173,19 @@ function guardar(request, response) {
 
 /* Cabeceras de seguridad en cada respuesta que salga del service worker.
    GitHub Pages no permite enviarlas desde el servidor, así que se ponen aquí:
-   así valen igual para la PWA instalada y para la web. */
+   así valen igual para la PWA instalada y para la web.
+
+   OJO con Permissions-Policy: una lista vacía en una característica NO es
+   «sin restricción», es «prohibido para todos». En una revisión anterior el
+   micro quedó con lista vacía y el dictado fallaba con «not-allowed» aunque el
+   usuario ya hubiera concedido el permiso. Ahora se permite para el propio
+   origen. */
 function conSeguridad(response) {
   const h = new Headers(response.headers);
   h.set('X-Content-Type-Options', 'nosniff');
   h.set('X-Frame-Options', 'DENY');
   h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  h.set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=(), payment=()');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

@@ -586,6 +586,20 @@ def main():
           "function nombreOrt(" in sw and "nombreOrt(url.pathname)" in sw
           and sw.index("if (ortCdn)") < sw.index("if (url.origin !== location.origin)"),
           "el runtime se intercepta antes de descartar lo cross-origin")
+    _pp = re.search(r"h\.set\('Permissions-Policy', '([^']+)'\)", sw)
+    _pp = _pp.group(1) if _pp else ""
+    check("permissions-policy-no-bloquea-micro",
+          # Una lista vacía en una característica NO es "sin restricción", es
+          # "prohibido para todos": negaba el micro aunque estuviera concedido.
+          _pp and "microphone=(self)" in _pp and "microphone=()" not in _pp,
+          f"valor actual: {_pp!r}")
+    check("dictado-cae-a-local",
+          # El dictado del navegador depende de los servicios de Google y de la
+          # red. Si falla y el local está listo, se reintenta con el local.
+          "falloConexion" in js
+          and "startListenOffline(side)" in js
+          and js.count("falloConexion") >= 2,
+          "conversación y botón grande deben caer al dictado local")
     check("sw-no-borra-datos",
           # Si una versión vieja del SW se activa, no debe borrar las cachés de
           # modelos y dictado que ya descargó el usuario.

@@ -1598,12 +1598,22 @@ async function startListen(side) {
   rec.onerror = (e) => {
     setRecordingUI(side, false);
     activeRec = null;
+    // El dictado del navegador depende de los servicios de Google y de la red:
+    // muchos móviles sin Google Play Services (o con la red caída) fallan aquí.
+    // Si ya tenemos el dictado local descargado, se reintenta con él en vez de
+    // dejar el turno muerto con un aviso de micro que no viene a cuento.
+    const falloConexion = ['network', 'not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error);
+    if (falloConexion && !localConv && sttMode === 'ready') {
+      toast('🌐 El dictado del navegador no responde: uso el local (va solo, sin internet).', 5000);
+      setTimeout(() => startListenOffline(side), 250);
+      return;
+    }
     if (e.error === 'no-speech') {
       document.getElementById(`status${side.toUpperCase()}`).textContent = 'No se detectó voz';
       setTimeout(() => resetStatus(side), 2000);
     } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
       toast(window.isSecureContext
-        ? '⚠️ Micro bloqueado: dale permiso a este sitio (candado de la barra) y revisa el micro en los ajustes del sistema'
+        ? `⚠️ Micro bloqueado: permite el micro para este sitio.${sttMode === 'ready' ? ' O pulsa «🎙 Probar micro» para comprobarlo.' : ''}`
         : '🔒 El micro exige HTTPS o localhost: no funciona en file:// ni en http:// con IP', 6000);
     } else if (e.error === 'audio-capture') {
       toast('🎤 No hay micrófono disponible o está ocupado por otra app', 5000);
@@ -2008,6 +2018,14 @@ async function talkAndTranslate() {
     talkRec = null;
     setTalkUI(false);
     updateTalkLabels();
+    // Igual que en la conversación: si el dictado del navegador falla por red o
+    // por no estar permitido y ya tenemos el local, se reintenta con el local.
+    const falloConexion = ['network', 'not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error);
+    if (falloConexion && !localTalk && sttMode === 'ready') {
+      toast('🌐 El dictado del navegador no responde: uso el local (sin internet).', 5000);
+      setTimeout(talkOffline, 250);
+      return;
+    }
     if (e.error === 'no-speech') setTalkUI(false, 'No se detectó voz. Pulsa de nuevo.');
     else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
       toast(window.isSecureContext
