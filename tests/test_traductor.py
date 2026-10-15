@@ -405,6 +405,9 @@ def main():
     check("micro-test",
           'onclick="micTest()"' in html and "function micTest(" in js
           and "getUserMedia" in js and "isSecureContext" in js)
+    check("micro-solo-online",
+          "el micrófono necesita internet" in js
+          and "el dictado es siempre online" in js.lower())
     check("error-con-motivo",
           "Error al traducir. Comprueba" not in js
           and "String(err.message || 'Error de conexión')" in js)

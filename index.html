@@ -1327,6 +1327,13 @@ function startListen(side) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
 
+  // El dictado es siempre online (el navegador lo reconoce en la nube):
+  // sin conexión no se puede escuchar; sí traducir por escrito y oír.
+  if (navigator.onLine === false) {
+    toast('📵 Sin conexión: el micrófono necesita internet. Escribe el texto y usa el altavoz.', 5000);
+    return;
+  }
+
   // Si ya hay una grabación activa, pararla
   if (activeRec) {
     activeRec.stop();
@@ -1667,8 +1674,8 @@ function updateTalkLabels(status) {
   const hint = document.getElementById('talkHint');
   if (hint) {
     hint.textContent = from === 'auto'
-      ? `Habla en cualquier idioma · se detecta solo y sonará en ${voiceLangName(to)} · requiere internet.`
-      : `Habla en ${voiceLangName(from)} · sonará en ${voiceLangName(to)}${auto ? ' · al terminar cambia solo al idioma contrario' : ''} · requiere internet.`;
+      ? `Habla en cualquier idioma · se detecta solo y sonará en ${voiceLangName(to)} · el micro requiere internet.`
+      : `Habla en ${voiceLangName(from)} · sonará en ${voiceLangName(to)}${auto ? ' · al terminar cambia solo al idioma contrario' : ''} · el micro requiere internet.`;
   }
   if (status) document.getElementById('talkStatus').textContent = status;
 }
@@ -1687,6 +1694,10 @@ function setTalkUI(listening, status) {
 function talkAndTranslate() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast('⚠️ Tu navegador no soporta dictado. Usa Chrome o Edge.', 4500); return; }
+  if (navigator.onLine === false) {
+    toast('📵 Sin conexión: el micrófono necesita internet. Escribe el texto y usa el altavoz.', 5000);
+    return;
+  }
   if (talkRec) { talkRec.stop(); return; }
 
   const fromCode = document.getElementById('srcLang').value;
