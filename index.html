@@ -1412,7 +1412,8 @@ async function handleFinalSpeech(transcript, side, myLang, theirLang) {
     } else if (err.message === 'LANG') {
       toast('Idioma no válido');
     } else {
-      toast('❌ Error al traducir. Comprueba la conexión.', 4000);
+      const msg = String(err.message || 'Error de conexión').slice(0, 140);
+      toast('❌ ' + msg, 5000);
       badge('err', 'Sin conexión');
     }
   }
@@ -1558,7 +1559,11 @@ async function doTranslate() {
     if (err.message === 'LIMIT') toast('⚠️ Límite diario alcanzado. Vuelve mañana.', 5000);
     else if (err.message === 'SAME_LANG') toast('Los idiomas de origen y destino son iguales');
     else if (err.message === 'LANG') toast('Idioma no válido');
-    else { toast('❌ Error de conexión', 4000); badge('err', 'Sin conexión'); }
+    else {
+      const msg = String(err.message || 'Error de conexión').slice(0, 140);
+      toast('❌ ' + msg, 5000);
+      badge('err', 'Sin conexión');
+    }
   } finally {
     setLoading(false);
   }
@@ -1731,7 +1736,11 @@ function talkAndTranslate() {
       }
     } catch (err) {
       if (err.message === 'LIMIT') toast('⚠️ Límite diario alcanzado. Vuelve mañana.', 5000);
-      else { toast('❌ Error al traducir. Comprueba la conexión.', 4000); badge('err', 'Sin conexión'); }
+      else {
+        const msg = String(err.message || 'Error de conexión').slice(0, 140);
+        toast('❌ ' + msg, 5000);
+        badge('err', 'Sin conexión');
+      }
       updateTalkLabels();
     } finally {
       document.getElementById('talkBtn').disabled = false;

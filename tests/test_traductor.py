@@ -405,6 +405,9 @@ def main():
     check("micro-test",
           'onclick="micTest()"' in html and "function micTest(" in js
           and "getUserMedia" in js and "isSecureContext" in js)
+    check("error-con-motivo",
+          "Comprueba la conexión" not in js
+          and "String(err.message || 'Error de conexión')" in js)
     check("matriz-offline",
           'id="offlineReady"' in html and "function refreshReadyMatrix(" in js
           and "Sin conexión listo" in js)
