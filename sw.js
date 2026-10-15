@@ -40,7 +40,7 @@ function nombreOrt(ruta) {
 // ─────────────────────────────────────────────────────────────
 // Subir este número es lo que publica una versión nueva: al activarse borra
 // las cachés viejas.
-const CACHE = 'freeduck-v31';
+const CACHE = 'freeduck-v32';
 
 const ASSETS = [
   './',
@@ -130,11 +130,14 @@ self.addEventListener('fetch', (event) => {
       fetch(new Request(event.request, { cache: 'reload' }))
         .then((res) => {
           if (!res.ok) throw new Error('HTTP ' + res.status);
-          guardar(event.request, res.clone());
-          return res;
+          const segura = conSeguridad(res);
+          guardar(event.request, segura.clone());
+          return segura;
         })
         .catch(() =>
-          caches.match(event.request).then((hit) => hit || caches.match('./index.html'))
+          caches
+            .match(event.request)
+            .then((hit) => caches.match('./index.html').then((fallback) => conSeguridad(fallback || hit || Response.error())))
         )
     );
     return;
@@ -150,8 +153,9 @@ self.addEventListener('fetch', (event) => {
         fetch(event.request)
           .then((res) => {
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            guardar(event.request, res.clone());
-            return res;
+            const segura = conSeguridad(res);
+            guardar(event.request, segura.clone());
+            return segura;
           })
           .catch(() => Response.error())
     )
@@ -167,6 +171,22 @@ function guardar(request, response) {
     .catch(() => {});
 }
 
+/* Cabeceras de seguridad en cada respuesta que salga del service worker.
+   GitHub Pages no permite enviarlas desde el servidor, así que se ponen aquí:
+   así valen igual para la PWA instalada y para la web. */
+function conSeguridad(response) {
+  const h = new Headers(response.headers);
+  h.set('X-Content-Type-Options', 'nosniff');
+  h.set('X-Frame-Options', 'DENY');
+  h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: h,
+  });
+}
+
 /* Devuelve un archivo del runtime del dictado.
    Orden: caché -> copia propia en el repo -> CDN.
    OJO: la respuesta del CDN se reempaqueta como si fuera nuestra; si se
@@ -174,17 +194,17 @@ function guardar(request, response) {
    la bloquea. */
 async function servirOrt(request, url, cdnUrl) {
   const hit = await caches.match(request);
-  if (hit) return hit;
+  if (hit) return conSeguridad(hit);
 
   const nombre = url.pathname.slice(url.pathname.lastIndexOf('/') + 1);
   const esWasm = nombre.endsWith('.wasm');
   const preparar = async (res) => {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const cuerpo = esWasm ? await res.arrayBuffer() : await res.text();
-    return new Response(cuerpo, {
+    return conSeguridad(new Response(cuerpo, {
       status: 200,
       headers: { 'Content-Type': esWasm ? 'application/wasm' : 'application/javascript' },
-    });
+    }));
   };
 
   const probar = async (entrada) => (entrada ? preparar(await fetch(entrada)) : null);

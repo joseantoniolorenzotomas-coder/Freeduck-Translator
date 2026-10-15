@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Freeduck-Translator" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.mymemory.translated.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.huggingface.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.mymemory.translated.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.huggingface.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests;" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -505,6 +505,24 @@
     #replyBtn { width: 100%; max-width: 340px; }
   }
 
+  /* ══════════ NAVEGACIÓN ENTRE PÁGINAS ══════════ */
+  .pagenav {
+    max-width: 1200px; margin: 14px auto 0; padding: 0 24px;
+    display: flex; gap: 8px; position: relative; z-index: 1;
+  }
+  .pagenav-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 11px 16px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text3); font-family: var(--font); font-size: 0.86rem; font-weight: 600;
+    cursor: pointer; transition: var(--t); min-height: 46px;
+  }
+  .pagenav-btn:hover { color: var(--text2); border-color: var(--border2); }
+  .pagenav-btn.active {
+    background: var(--surface3); color: var(--text);
+    border-color: var(--accent); box-shadow: 0 2px 12px var(--accent-g);
+  }
+
   @media (max-width: 480px) {
     .logo-name { display: none; }
     .header-inner { padding: 0 14px; gap: 10px; }
@@ -535,8 +553,21 @@
   <strong>⚡ Versión online</strong> — Motor: <strong style="color:var(--text2)">MyMemory</strong> · Gratuito · Sin registro · Sin API key · <strong style="color:var(--text2)">Sin conexión</strong>: con el botón de arriba, el traductor y la conversación funcionan ES↔EN sin internet.
 </div>
 
+<!-- NAV: cambiar entre la app y la página de información -->
+<nav class="pagenav" id="pageNav">
+  <button class="pagenav-btn active" id="navApp" onclick="irPagina('app')" aria-current="page">
+    🗣️ Traducir y conversar
+  </button>
+  <button class="pagenav-btn" id="navInfo" onclick="irPagina('info')">
+    📖 Cómo funciona y contacto
+  </button>
+</nav>
+
 <!-- MAIN -->
 <main>
+
+  <!-- ══ VISTA 1: LA APP (traducir y conversar) ══ -->
+  <div id="vistaApp">
 
   <!-- ══ MICRO REDONDO: la acción principal, arriba del todo ══ -->
   <div class="voice-turn voice-turn-top" id="voiceTurn">
@@ -613,6 +644,10 @@
             <option value="ta">தமிழ்</option>
             <option value="he">עברית</option>
             <option value="sw">Kiswahili</option>
+            <option value="ca">Català</option>
+            <option value="gl">Galego</option>
+            <option value="eu">Euskara</option>
+            <option value="va">Valencià</option>
           </select>
           <button class="btn-clear" onclick="clearAll()" title="Borrar">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M10 1L1 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -663,6 +698,10 @@
             <option value="ta">தமிழ்</option>
             <option value="he">עברית</option>
             <option value="sw">Kiswahili</option>
+            <option value="ca">Català</option>
+            <option value="gl">Galego</option>
+            <option value="eu">Euskara</option>
+            <option value="va">Valencià</option>
           </select>
           <button class="btn-tts" id="ttsBtn" onclick="speakTarget()" title="Escuchar" style="display:none">
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 5.5h2.5L8 2v11l-3.5-3.5H2V5.5zM10.5 4.5c.8.8 1.3 1.9 1.3 3.1s-.5 2.3-1.3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -756,8 +795,8 @@
       <button class="btn btn-outline" id="swapConvBtn" onclick="swapConv()" title="Intercambiar los idiomas de A y B">🔁 Intercambiar A/B</button>
     </div>
     <p class="conv-hint" id="convHint">
-      Cada persona habla <strong>su</strong> idioma y escucha el otro: da igual quién empiece.
-      Elige un idioma distinto en cada tarjeta y pulsa el micro de quien vaya a hablar.
+      Cada uno habla <strong>su</strong> idioma y escucha el otro: da igual quién empiece.
+      ¿Cómo va? en «📖 Cómo funciona y contacto».
     </p>
 
     <!-- No speech fallback -->
@@ -819,6 +858,10 @@
             <option value="ta">🇮🇳 தமிழ்</option>
             <option value="he">🇮🇱 עברית</option>
             <option value="sw">🇰🇪 Kiswahili</option>
+            <option value="ca">🌐 Català</option>
+            <option value="gl">🌐 Galego</option>
+            <option value="eu">🌐 Euskara</option>
+            <option value="va">🌐 Valencià</option>
           </select>
           <div class="mic-wrap">
             <div class="mic-rings"></div>
@@ -873,6 +916,10 @@
             <option value="ta">🇮🇳 தமிழ்</option>
             <option value="he">🇮🇱 עברית</option>
             <option value="sw">🇰🇪 Kiswahili</option>
+            <option value="ca">🌐 Català</option>
+            <option value="gl">🌐 Galego</option>
+            <option value="eu">🌐 Euskara</option>
+            <option value="va">🌐 Valencià</option>
           </select>
           <div class="mic-wrap">
             <div class="mic-rings"></div>
@@ -902,10 +949,15 @@
 
   </div><!-- end pageConv -->
 
-  <!-- ══ DESCARGAS ══ -->
-  <section class="dl-wrap" id="descargas">
+  </div><!-- ══ FIN VISTA APP ══ -->
+
+  <!-- ══ VISTA 2: CÓMO FUNCIONA Y CONTACTO ══ -->
+  <div id="vistaInfo" style="display:none">
+
+  <!-- ══ CÓMO FUNCIONA Y CONTACTO ══ -->
+  <section class="dl-wrap">
     <div class="section-head">
-      <span class="section-title">Descargas</span>
+      <span class="section-title">Cómo funciona</span>
       <div class="section-line"></div>
     </div>
     <div class="dl-grid">
@@ -913,22 +965,44 @@
         <div class="dl-emoji">📖</div>
         <h3>Cómo descargarlo y usarlo</h3>
         <ol>
-          <li><strong>Instalar como app (recomendado):</strong> abre esta página en Chrome (móvil u ordenador) → menú ⋮ → «Instalar Freeduck-Translator» o «Añadir a pantalla de inicio». Aparecerá el icono del pato con tus apps.</li>
-          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa <strong>⬇ Descarga para usar sin conexión</strong> y espera a que la línea «Sin conexión listo» quede toda en ✓.</li>
-          <li><strong>Usarlo sin conexión:</strong> activa el modo avión y dicta o escribe para traducir ES↔EN y escuchar. El dictado sin red usa el reconocedor local (más lento la primera vez).</li>
-          <li><strong>Conversación:</strong> cada persona pulsa su micrófono (Persona A / Persona B); la app traduce y habla sola con la voz elegida. Con «Cambio automático», los idiomas se alternan solos.</li>
+          <li><strong>Instalar como app (recomendado):</strong> abre esta página en Chrome (móvil u ordenador) → menú ⋮ → «Instalar Freeduck-Translator» o «Añadir a pantalla de inicio». Se instala con su icono junto a tus apps, como una app normal.</li>
+          <li><strong>Preparar el sin conexión (una sola vez, con internet):</strong> pulsa <strong>⬇ Descarga para usar sin conexión</strong>. Baja todo junto (~140 MB): los dos modelos de traducción, las dos voces naturales y el dictado. Espera a que la línea «Sin conexión listo» quede toda en ✓.</li>
+          <li><strong>Usarlo sin conexión:</strong> activa el modo avión. La app traduce en los dos sentidos, entiende lo que dictas por el micro y responde con voz. Sin internet de por medio.</li>
         </ol>
       </div>
+
+      <div class="dl-card dl-wide">
+        <div class="dl-emoji">💬</div>
+        <h3>La conversación</h3>
+        <p><strong>Cada persona habla su propio idioma y escucha el otro: da igual quién empiece.</strong></p>
+        <p>Elige un idioma distinto en cada tarjeta (Persona A y Persona B) y pulsa el micro de quien vaya a hablar:</p>
+        <ul>
+          <li>Lo que diga una persona se traduce al idioma de la otra <em>automáticamente</em>.</li>
+          <li>La traducción se lee <em>en voz alta</em> con la voz elegida, y queda escrita en el historial de la conversación.</li>
+          <li>Si te has equivocado de idioma, pulsa <strong>🔁 Intercambiar A/B</strong> para cambiar los roles al instante.</li>
+        </ul>
+      </div>
+
+      <div class="dl-card dl-wide">
+        <div class="dl-emoji">🌍</div>
+        <h3>Idiomas</h3>
+        <ul>
+          <li><strong>Sin conexión (ES↔EN):</strong> traducción, dictado y voz natural. Es lo que se descarga en el paso de arriba.</li>
+          <li class="dl-req"><strong>Con conexión (42 idiomas):</strong> Español, English, Català, Galego, Euskara, Valencià, Français, Deutsch, Italiano, Português, 中文, 日本語, العربية, Русский, Svenska, Norsk, Dansk, Suomi, Íslenska, Eesti, Latviešu, Lietuvių, हिन्दी, বাংলা, Bahasa Indonesia, 한국어, Tiếng Việt, Türkçe, ไทย, فارسی, Polski, Українська, Nederlands, Ελληνικά, Română, Magyar, Čeština, Bahasa Melayu, اردو, தமிழ், עברית, Kiswahili + detección automática de idioma.</li>
+          <li>El valenciano se traduce con el motor del catalán (su norma escrita estándar): MyMemory no lo tiene como idioma propio.</li>
+        </ul>
+      </div>
+
       <div class="dl-card">
         <div class="dl-emoji">📲</div>
         <h3>Instalar como app</h3>
-        <p>Freeduck-Translator se instala desde el navegador, en móvil y en ordenador:</p>
         <ol>
           <li>Abre esta página en Chrome o Edge.</li>
           <li>Menú ⋮ → «Instalar Freeduck-Translator» (en móvil: «Añadir a pantalla de inicio»).</li>
           <li>Se abre como app propia, con su icono.</li>
         </ol>
       </div>
+
       <div class="dl-card">
         <div class="dl-emoji">⚠️</div>
         <h3>Requisitos</h3>
@@ -938,8 +1012,20 @@
           <li>Micrófono para el dictado (el navegador pedirá permiso).</li>
         </ul>
       </div>
+
+      <div class="dl-card dl-wide" id="contacto">
+        <div class="dl-emoji">✉️</div>
+        <h3>Contacto</h3>
+        <p>¿Alguna idea, un error, o un idioma que falte? Escríbeme y lo miro.</p>
+        <p style="margin-top:10px">
+          <a class="btn btn-primary" href="mailto:duckdev77@gmail.com?subject=Freeduck-Translator" style="text-decoration:none">✉️ duckdev77@gmail.com</a>
+        </p>
+        <p class="voice-sub" style="margin-top:8px">Proyecto gratuito y sin registro. Si lo instalas como app, el correo se abrirá en tu gestor de siempre.</p>
+      </div>
     </div>
   </section>
+
+  </div><!-- ══ FIN VISTA INFO ══ -->
 
 </main>
 
@@ -991,6 +1077,10 @@ const CODES = {
   tr: 'tr', th: 'th', fa: 'fa', pl: 'pl', uk: 'uk',
   nl: 'nl', el: 'el', ro: 'ro', hu: 'hu', cs: 'cs',
   ms: 'ms', ur: 'ur', ta: 'ta', he: 'he', sw: 'sw',
+  // Idiomas de España pedidos 2026-10-15 (probados contra MyMemory).
+  // El valenciano no existe como idioma propio en MyMemory: se traduce con el
+  // motor catalán ('ca'), que es la norma escrita estándar del valenciano.
+  ca: 'ca', gl: 'gl', eu: 'eu', va: 'ca',
 };
 // Códigos locale para SpeechRecognition
 const LOCALES = {
@@ -1002,6 +1092,7 @@ const LOCALES = {
   tr: 'tr-TR', th: 'th-TH', fa: 'fa-IR', pl: 'pl-PL', uk: 'uk-UA',
   nl: 'nl-NL', el: 'el-GR', ro: 'ro-RO', hu: 'hu-HU', cs: 'cs-CZ',
   ms: 'ms-MY', ur: 'ur-PK', ta: 'ta-IN', he: 'he-IL', sw: 'sw-KE',
+  ca: 'ca-ES', gl: 'gl-ES', eu: 'eu-ES', va: 'ca-ES',
 };
 const NAMES = {
   auto: 'AUTO', es: 'ES', en: 'EN', fr: 'FR', de: 'DE', it: 'IT',
@@ -1012,6 +1103,7 @@ const NAMES = {
   tr: 'TR', th: 'TH', fa: 'FA', pl: 'PL', uk: 'UK',
   nl: 'NL', el: 'EL', ro: 'RO', hu: 'HU', cs: 'CS',
   ms: 'MS', ur: 'UR', ta: 'TA', he: 'HE', sw: 'SW',
+  ca: 'CAT', gl: 'GAL', eu: 'EU', va: 'VAL',
 };
 // Voces offline (eSpeak) incluidas en vendor/mespeak. v1: ES/EN.
 // (Los ids son los de carga de meSpeak: 'en/en-us', no 'en-us'.)
@@ -1026,6 +1118,7 @@ const FLAGS = {
   tr: '🇹🇷', th: '🇹🇭', fa: '🇮🇷', pl: '🇵🇱', uk: '🇺🇦',
   nl: '🇳🇱', el: '🇬🇷', ro: '🇷🇴', hu: '🇭🇺', cs: '🇨🇿',
   ms: '🇲🇾', ur: '🇵🇰', ta: '🇮🇳', he: '🇮🇱', sw: '🇰🇪',
+  ca: '🌐', gl: '🌐', eu: '🌐', va: '🌐',
 };
 
 /* Nombres de idioma localizados al idioma de la página (p. ej. «Sueco» si la
@@ -1114,6 +1207,9 @@ window.addEventListener('freeduck:stt-ready', () => { if (typeof refreshSTT === 
   sel('tgtLang', recall('fd_tgt') || 'en');
   localizeLangOptions();
 
+  // Volver a la vista en la que estaba la última vez (app o información).
+  try { irPagina(localStorage.getItem('fd_vista') === 'info' ? 'info' : 'app'); } catch {}
+
   if ('speechSynthesis' in window) {
     document.getElementById('ttsBtn').style.display = '';
   }
@@ -1196,6 +1292,23 @@ function sel(id, val) {
 /* ══════════════════════════════════════════════════════
    TABS
 ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   NAVEGACIÓN ENTRE VISTAS (app ↔ cómo funciona)
+   La barra vive fuera de <main> para verse en las dos vistas.
+═══════════════════════════════════════════════════════ */
+function irPagina(vista) {
+  const app  = document.getElementById('vistaApp');
+  const info = document.getElementById('vistaInfo');
+  if (!app || !info) return;
+  const enApp = vista === 'app';
+  app.style.display  = enApp ? '' : 'none';
+  info.style.display = enApp ? 'none' : '';
+  document.getElementById('navApp').classList.toggle('active', enApp);
+  document.getElementById('navInfo').classList.toggle('active', !enApp);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  try { localStorage.setItem('fd_vista', vista); } catch {}
+}
+
 function goConv() {
   const conv = document.getElementById('pageConv');
   if (!conv) return;

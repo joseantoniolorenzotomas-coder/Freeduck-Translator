@@ -111,6 +111,9 @@ def main():
               f"faltan: {sorted((ref | {'auto'}) - names)}")
         check("FLAGS-cubre-idiomas", ref <= flags,
               f"faltan: {sorted(ref - flags)}")
+        check("valenciano-usa-catalan",
+              "va: 'ca'" in js and "ca: 'ca'" in js and "gl: 'gl'" in js and "eu: 'eu'" in js,
+              "MyMemory no tiene 'va': se traduce con el motor catalán")
         check("LOCALES-sin-auto", "auto" not in locales,
               "el código gestiona 'auto' aparte (navigator.language)")
 
@@ -255,7 +258,17 @@ def main():
           "Requiere conexi" in html or "requiere internet" in html)
 
     # ---------- 6d. sección de descargas (sin ZIP: el offline va en la app) ----------
-    check("descargas-section", 'id="descargas"' in html)
+    # La antigua sección «Descargas» ahora es la vista «Cómo funciona»
+    check("descargas-section",
+          'id="vistaInfo"' in html and "Cómo funciona y contacto" in html)
+    check("contacto-mail",
+          "mailto:duckdev77@gmail.com" in html
+          and "duckdev77@gmail.com" in html)
+    check("nav-entre-vistas",
+          'id="vistaApp"' in html and 'id="pageNav"' in html
+          and "function irPagina(" in js
+          and re.search(r'<button[^>]+id="navInfo"[^>]+onclick="irPagina', html) is not None
+          and re.search(r'<button[^>]+id="navApp"[^>]+onclick="irPagina', html) is not None)
     check("download-button",
           bool(re.search(r'<button[^>]+id="dlOfflineBtn"[^>]+onclick="downloadAllOffline\(\)"',
                          html))
