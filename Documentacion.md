@@ -177,6 +177,9 @@ Antes de distribuir código, bibliotecas, modelos o datos, se documentarán sus 
   Datos de voz sharvard: CC-BY 3.0 (atribución incluida).
 - **@huggingface/transformers + onnxruntime-web** (dictado offline,
   `vendor/stt/`, con parche de ruta local documentado): Apache-2.0 y MIT.
+  El bundle `transformers.min.js` y el `.wasm` de ONNX NO viajan en git
+  (el detector de secretos de GitHub los bloquea): los sirve el Service
+  Worker desde el CDN oficial en la primera carga y quedan en caché.
 - **Modelo Xenova/whisper-tiny q8** (~42 MB, se descarga una vez, no viaja
   en el ZIP): Apache-2.0. Origen: https://huggingface.co/Xenova/whisper-tiny
 - **nginx:alpine** (imagen Docker, solo para servir en local): BSD-2-Clause.

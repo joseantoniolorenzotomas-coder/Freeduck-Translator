@@ -117,7 +117,7 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Decisión:** Integrar Xenova/whisper-tiny q8 (~42 MB, Apache-2.0) con Transformers.js + ONNX Runtime Web vendoriados (parche de ruta local documentado). Una sola descarga vale ES+EN. Sin red, los micros usan el dictado local; con red, el del navegador.
 - **Motivo:** Petición del propietario: sin dictado offline no hay conversación offline real.
 - **Estado:** Transcripción verificada en navegador (audio ES real → texto correcto en ~3 s). Grabación por micro pendiente de probar en dispositivo real (sin micro en el entorno de pruebas).
-- **Consecuencias:** ~42 MB más de descarga opcional. Privacidad: el audio no sale del dispositivo en modo offline.
+- **Consecuencias:** ~42 MB más de descarga opcional. Privacidad: el audio no sale del dispositivo en modo offline. Los runtimes que GitHub marca como secretos (bundle transformers, wasm ONNX) se sirven por CDN+caché, no viajan en git.
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-15).
 
 ## Pendiente de decidir
