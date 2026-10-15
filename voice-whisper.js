@@ -107,13 +107,12 @@ window.LocalSTT = {
       try { rec.stop(); } catch (e) { reject(new Error('REC')); }
     });
     if (stream) stream.getTracks().forEach((t) => { try { t.stop(); } catch {} });
-    if (!blob.size) return '';
-    const pipe = await getASR();
-    const samples = await to16k(blob);
-    if (samples.length < 1600) return ''; // menos de 0,1 s: nada útil
-    const out = await pipe(samples, { language: LANGS[lang] || 'spanish', task: 'transcribe' });
-    const text = String((out && out.text) || '').trim();
-    return text;
+    recChunks = [];
+    return transcribir(blob, lang);
+  },
+  // Transcribe un audio ya grabado (diagnóstico y pruebas).
+  async transcribeBlob(blob, lang) {
+    return transcribir(blob, lang);
   },
   abort() {
     clearTimeout(recTimer);
@@ -122,6 +121,17 @@ window.LocalSTT = {
     recChunks = [];
   },
 };
+
+/* Carga el modelo si hace falta y transcribe un blob de audio.
+   Devuelve '' si no hay audio útil. */
+async function transcribir(blob, lang) {
+  if (!blob || !blob.size) return '';
+  const pipe = await getASR();
+  const samples = await to16k(blob);
+  if (samples.length < 1600) return ''; // menos de 0,1 s: nada útil
+  const out = await pipe(samples, { language: LANGS[lang] || 'spanish', task: 'transcribe' });
+  return String((out && out.text) || '').trim();
+}
 
 // Aviso a la página de que el dictado local ya está disponible
 window.dispatchEvent(new Event('freeduck:stt-ready'));

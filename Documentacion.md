@@ -105,20 +105,25 @@ La traducción deberá probarse con la conexión desactivada.
 
 Si una función necesita internet —por ejemplo, descargar inicialmente un modelo o comprobar actualizaciones—, debe indicarse. No se debe describir como offline un flujo que necesite conectarse a un servicio de traducción para producir resultados.
 
-### 6.1. Offline beta (texto ES↔EN)
+### 6.1. Offline (texto, voces y dictado ES/EN)
 - Motor local Bergamot (WASM) con modelos de Mozilla, integrado en la app.
 - Los modelos (49 MB: ES→EN + EN→ES) viajan en el paquete (`models/`, misma
-  origin): sin CORS ni dependencias externas; cada sentido se guarda en la
-  caché del navegador la primera vez que se pulsa «Descargar modelo».
-- v1 limitada a ES↔EN (par verificado). La voz (dictado) sigue necesitando
-  internet.
-- VERIFICADO 2026-10-14 en navegador (servidor apagado a propósito): la app
-  recarga sin red, traduce ES→EN correctamente con el distintivo
-  «Offline · es→en» y reproduce la voz con el motor local («natural»).
-  Procedimiento: descargar modelo+voz una vez, cortar la red y traducir.
-- Dictado offline (Whisper tiny q8, Apache-2.0, ~42 MB, ES+EN con una sola
-  descarga): verificado en navegador 2026-10-15 (audio real ES transcrito
-  bien en ~3 s). Con red se usa el dictado del navegador (más rápido).
+  origin): sin CORS ni dependencias externas.
+- Un solo botón, «⬇ Descarga para usar sin conexión», baja de una vez todo lo
+  que hace falta (~140 MB): los dos modelos de traducción, las dos voces
+  naturales y el motor de dictado. Sin fases ni pasos intermedios.
+- Limitado a ES↔EN (pares verificados).
+- El dictado (Whisper tiny q8, Apache-2.0, ES+EN con una sola descarga) se
+  resuelve en el dispositivo; no sale audio ni texto a ningún servicio.
+- VERIFICADO 2026-10-15 en navegador (servidor apagado a propósito): la app
+  recarga sin red, traduce ES→EN y EN→ES, transcribe audio ES real (~5 s) y
+  genera voz natural ES y EN en el dispositivo. La línea «Sin conexión listo»
+  queda toda en ✓. Procedimiento: instalar la PWA, pulsar el botón una vez
+  con conexión y cortar la red.
+- Runtimes que no viajan en el repo (GitHub los marca como secretos): el
+  service worker los trae del CDN oficial la primera vez y los cachea como
+  propios. Si el CDN no está disponible, el texto y las voces siguen
+  funcionando; solo el dictado no.
 - Voz offline robótica (eSpeak vía meSpeak, GPL-3.0) incluida para ES/EN
   desde la instalación, sin descarga adicional. Si el modo worker falla
   (p. ej. abriendo por `file://`), la app reintenta en modo simple

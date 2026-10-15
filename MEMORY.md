@@ -120,6 +120,35 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Consecuencias:** ~42 MB más de descarga opcional. Privacidad: el audio no sale del dispositivo en modo offline. Los runtimes que GitHub marca como secretos (bundle transformers, wasm ONNX) se sirven por CDN+caché, no viajan en git.
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-15).
 
+### 2026-10-15 — Un solo botón de descarga y página única
+- **Decisión:** Eliminar las descargas por fases (modelo por un lado, voz por
+  otro, dictado aparte) y el ZIP. Un único botón, «⬇ Descarga para usar sin
+  conexión», baja de una vez modelos ES↔EN + voces ES/EN + dictado (~140 MB).
+  La app pasa a ser una sola página: micro redondo arriba del todo, luego
+  «Conversar» + «Descarga para usar sin conexión», debajo el traductor y al final
+  la conversación. Se eliminan las pestañas.
+- **Motivo:** Petición del propietario: la intención principal es conversar, y
+  el ZIP confundía (no hace falta descargar nada para usarlo sin conexión).
+- **Estado:** Verificado en navegador con el servidor apagado: la app recarga,
+  traduce ES→EN y EN→ES, transcribe audio ES real (~5 s) y genera voz
+  natural ES y EN en el dispositivo. «Sin conexión listo» queda toda en ✓.
+- **Consecuencias:** El offline vive en la app instalada (PWA). El ZIP deja de
+  existir; la sección «Descargas» queda como guía de instalación y uso.
+- **Aprobada por:** propietario del proyecto (sesión 2026-10-15).
+
+### 2026-10-15 — Correcciones en el service worker (datos del usuario)
+- **Decisión:** El `activate` solo borra cachés `freeduck-vNN` (versiones
+  anteriores de la app). Antes borraba **todas** las demás, incluidas
+  `freeduck-models-v1` y `transformers-cache`: cualquier actualización del SW
+  borraba los modelos, las voces y el dictado que el usuario ya había
+  descargado. Tampoco se devuelve `index.html` como sustituto de un recurso
+  que falta (un módulo pediría HTML y el navegador lo parsearía como
+  JavaScript: «Unexpected token '<'»).
+- **Motivo:** Depuración tras la reestructuración; se reprodujo y se corrigió.
+- **Estado:** Verificado: al reactivar el SW, la caché de modelos conserva sus
+  7 entradas y la matriz sigue en ✓.
+- **Aprobada por:** propietario del proyecto (sesión 2026-10-15).
+
 ## Pendiente de decidir
 - App nativa móvil (APK Android / IPA iOS) frente a solo PWA instalable.
 - Plataformas iniciales: ordenador, móvil o ambas; sistemas operativos concretos.

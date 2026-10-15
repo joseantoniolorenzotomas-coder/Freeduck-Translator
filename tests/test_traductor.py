@@ -257,12 +257,32 @@ def main():
     # ---------- 6d. sección de descargas (sin ZIP: el offline va en la app) ----------
     check("descargas-section", 'id="descargas"' in html)
     check("download-button",
-          bool(re.search(r'<a[^>]+id="dlBtn"[^>]+href="#descargas"', html)))
+          bool(re.search(r'<button[^>]+id="dlOfflineBtn"[^>]+onclick="downloadAllOffline\(\)"',
+                         html))
+          and "Descarga para usar sin conexión" in html)
     _hay_zip = (ROOT / "descargas").exists() and bool(list((ROOT / "descargas").glob("*.zip")))
     check("sin-zip",
           "Descargar archivos" not in html
           and "freeduck-translator-pwa-v0.1.zip" not in html
           and not _hay_zip)
+
+    # ---------- 6d-bis. portada: conversar + descarga arriba, traductor debajo ----------
+    i_conversar = html.find('id="talkNowBtn"')
+    i_descarga = html.find('id="dlOfflineBtn"')
+    i_traductor = html.find('id="srcLang"')
+    i_conv = html.find('id="pageConv"')
+    check("portada-conversar-primero",
+          0 <= i_conversar < i_descarga < i_traductor < i_conv
+          and "function goConv(" in js,
+          f"posiciones {i_conversar}/{i_descarga}/{i_traductor}/{i_conv}")
+    check("micro-con-imagen",
+          (ROOT / "img/micro-azul-ondas.png").exists()
+          and html.count("img/micro-azul-ondas.png") >= 3
+          and "mic-ico" in html and "stop-ico" in html
+          and "textContent = listening ? '⏹'" not in js)
+    check("sin-pestanas",
+          "switchTab" not in js and "switchTab" not in html
+          and 'class="tabs"' not in html and ".tab-btn" not in html)
 
     # ---------- 6e. ejecutable Electron ----------
     epkg_path = ROOT / "electron" / "package.json"
@@ -320,7 +340,8 @@ def main():
           "OFFLINE_PAIRS" in off and "es" in off and "en" in off)
     check("offline-bar",
           all(x in html for x in ("offlineBar", "offlineStatus",
-                                  "refreshOfflineBar", "dlAllBtn", "wipeBtn",
+                                  "refreshOfflineBar", "dlOfflineBtn",
+                                  "dlAllStatus", "wipeBtn",
                                   "downloadAllOffline", "wipeAllOffline"))
           and all(("function " + f + "(") in js for f in
                   ("downloadAllOffline", "wipeAllOffline"))
@@ -358,7 +379,8 @@ def main():
     check("voz-sin-kokoro",
           not (ROOT / "vendor/kokoro").exists()
           and not (ROOT / "voice-kokoro.js").exists()
-          and "kokoro" not in sw.lower())
+          and "kokoro" not in sw.lower()
+          and "kokoro" not in html.lower())
     check("voz-script-tag",
           'src="vendor/mespeak/mespeak.js"' in html)
     check("voz-offline-first",
@@ -427,12 +449,13 @@ def main():
           all((ROOT / f).exists() for f in
               ("voices/es/es_ES-sharvard-medium.onnx", "voices/es/tokens.txt",
                "voices/en/en_US-amy-low.onnx", "voices/en/tokens.txt")))
-    check("voz-kokoro-ui",
-          all(x in html for x in ("kokoroStatus", "refreshKokoro"))
+    check("voz-natural-ui",
+          all(x in html for x in ("vozNaturalStatus", "refreshVozNatural"))
+          and "kokoro" not in html.lower()
           and "kokoroBtn" not in html and "kokoroAction" not in js
           and 'value="natural"' in html)
     check("voz-sherpa-etapas",
-          "Descargando todo" in js and "warmup" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8"))
+          "Descargando ${i}" in js and "warmup" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8"))
     check("servidor-local", (ROOT / "servir.py").exists()
           and "Cross-Origin-Embedder-Policy" in (ROOT / "servir.py").read_text(encoding="utf-8"))
 
@@ -496,9 +519,10 @@ def main():
 
     # ---------- 6j. regresión: estado antes de init (TDZ) ----------
     pos_init = js.find("(function init()")
-    tdz_mal = [v for v in ("offlineMode", "offlineTries", "kokoroMode",
-                           "kokoroTries", "hist", "lastText", "activeRec",
-                           "localConv", "localTalk", "sttMode", "sttTries")
+    tdz_mal = [v for v in ("offlineMode", "offlineTries", "vozMode",
+                           "vozTries", "sttMode", "sttTries", "dlAllBusy",
+                           "hist", "lastText", "activeRec",
+                           "localConv", "localTalk")
                if js.find("let " + v) == -1 or js.find("let " + v) > pos_init]
     check("estado-antes-de-init", not tdz_mal and pos_init != -1,
           "" if not tdz_mal else f"declarados tarde: {tdz_mal}")
@@ -525,8 +549,29 @@ def main():
           and "Xenova/whisper-tiny" in (ROOT / "voice-whisper.js").read_text(encoding="utf-8")
           and "MediaRecorder" in (ROOT / "voice-whisper.js").read_text(encoding="utf-8"))
     check("stt-runtime-por-cdn",
-          "CDN_FALLBACK" in sw and "TRANSFORMERS_CDN" in sw and "ORT_WASM_CDN" in sw
+          all(x in sw for x in ("ORT_ARCHIVOS", "ort.webgpu.bundle.min.mjs",
+                                "ort-wasm-simd-threaded.asyncify.mjs",
+                                "ort-wasm-simd-threaded.asyncify.wasm",
+                                "transformers.min.js", "cdn.jsdelivr.net"))
           and "cdn.jsdelivr.net" in (csp.group(1) if csp else ""))
+    check("stt-runtime-por-nombre",
+          # Se localiza por nombre y no por ruta exacta: el bundle de
+          # Transformers apunta a su propio CDN, que cambia con la versión.
+          "function nombreOrt(" in sw and "nombreOrt(url.pathname)" in sw
+          and sw.index("if (ortCdn)") < sw.index("if (url.origin !== location.origin)"),
+          "el runtime se intercepta antes de descartar lo cross-origin")
+    check("sw-no-borra-datos",
+          # Si una versión vieja del SW se activa, no debe borrar las cachés de
+          # modelos y dictado que ya descargó el usuario.
+          "CACHE_VIEJA = /^freeduck-v\\d+$/" in sw
+          and "keys.filter((k) => CACHE_VIEJA.test(k))" in sw
+          and "filter((k) => k !== CACHE)" not in sw,
+          "el activate solo borra cachés freeduck-vNN")
+    check("sw-no-sustituye-por-html",
+          # Devolver index.html en lugar de un módulo produce
+          # "Unexpected token '<'": nada inventado, Response.error().
+          ".catch(() => Response.error())" in sw
+          and sw.count("caches.match('./index.html')") == 1)
 
     # ---------- 6h. modelos offline empaquetados ----------
     reg_path = ROOT / "models" / "registry.json"

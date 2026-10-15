@@ -103,24 +103,6 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
 
-  /* TABS */
-  .tabs {
-    display: flex; gap: 2px;
-    background: var(--surface2); border-radius: 10px;
-    padding: 3px; border: 1px solid var(--border);
-  }
-
-  .tab-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 6px 16px; border-radius: 7px;
-    border: none; background: transparent;
-    font-family: var(--font); font-size: 0.82rem; font-weight: 500;
-    color: var(--text3); cursor: pointer; transition: var(--t);
-    white-space: nowrap;
-  }
-  .tab-btn:hover { color: var(--text2); }
-  .tab-btn.active { background: var(--surface3); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-
   .header-sep { flex: 1; }
 
   .status-badge {
@@ -152,9 +134,29 @@
     position: relative; z-index: 1;
   }
 
-  /* Page panels */
-  .page { display: none; }
-  .page.active { display: block; animation: fadeIn 0.2s ease; }
+  /* Page panels: página única, se muestran todas en cascada */
+  .page { display: block; animation: fadeIn 0.2s ease; }
+
+  /* ══════════ BARRA PRINCIPAL (conversar + descarga) ══════════ */
+  .cta-bar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 12px; margin-bottom: 18px;
+    padding: 18px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-xl); box-shadow: var(--shadow-md);
+  }
+  .cta-bar .btn { flex: 1 1 260px; max-width: 420px; min-height: 60px; font-size: 1.05rem; border-radius: 14px; }
+  .cta-ico { vertical-align: -6px; margin-right: 6px; }
+  #talkNowBtn { font-weight: 700; letter-spacing: 0.01em; }
+  #dlOfflineBtn { font-weight: 600; }
+  .cta-note { flex: 1 1 100%; text-align: center; font-size: 0.8rem; color: var(--text3); line-height: 1.5; }
+  .cta-note.ready { color: var(--success); }
+  #pageConv { scroll-margin-top: 16px; border-radius: var(--r-xl); }
+  #pageConv.flash { animation: convFlash 1.3s ease; }
+  @keyframes convFlash {
+    0%, 100% { box-shadow: none; }
+    25%, 75% { box-shadow: 0 0 0 3px var(--accent-g); }
+  }
   @keyframes fadeIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
 
   /* ══════════ TRANSLATOR CARD ══════════ */
@@ -216,6 +218,7 @@
     padding: 8px 16px; font-family: var(--font); font-size: 0.82rem; font-weight: 500;
     cursor: pointer; transition: var(--t); white-space: nowrap; user-select: none;
   }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn-ghost { background: transparent; color: var(--text3); border: 1px solid transparent; }
   .btn-ghost:hover { background: var(--surface3); color: var(--text2); border-color: var(--border); }
   .btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
@@ -249,25 +252,28 @@
   }
   .talk-btn {
     width: 124px; height: 124px; border-radius: 50%;
-    border: none; cursor: pointer; flex-shrink: 0;
-    font-size: 2.9rem; color: #fff;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    box-shadow: 0 6px 32px var(--accent-g);
+    border: 1px solid var(--border2); cursor: pointer; flex-shrink: 0;
+    background: var(--surface3);
+    box-shadow: 0 6px 28px rgba(37,99,235,0.28);
     display: flex; align-items: center; justify-content: center;
     transition: transform 0.15s ease;
     touch-action: manipulation;
   }
+  .talk-btn img { width: 82px; height: 82px; display: block; }
+  .talk-btn .stop-ico { display: none; font-size: 2.9rem; color: var(--text); line-height: 1; }
+  .talk-btn.listening .mic-ico { display: none; }
+  .talk-btn.listening .stop-ico { display: block; }
   .talk-btn:hover { transform: scale(1.05); }
   .talk-btn:active { transform: scale(0.95); }
-  .talk-btn.listening { animation: micPulse 0.8s ease-in-out infinite alternate; }
+  .talk-btn.listening { animation: micPulse 0.8s ease-in-out infinite alternate; border-color: var(--accent); }
   .talk-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; animation: none; }
+  .voice-turn-top { margin-top: 0; padding: 22px 22px 18px; }
   .voice-info { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; min-width: 0; max-width: 560px; }
   .voice-status { font-size: 1rem; color: var(--text); font-weight: 600; }
   .voice-sub { font-size: 0.8rem; color: var(--text3); line-height: 1.5; }
   .auto-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.8rem; color: var(--text2); cursor: pointer; margin-top: 4px; user-select: none; }
   .auto-row input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
   #replyBtn { padding: 12px 30px; font-size: 0.92rem; min-height: 48px; }
-  #dlBtn { padding: 12px 30px; font-size: 0.92rem; min-height: 48px; text-decoration: none; }
 
   /* ══════════ OFFLINE BAR ══════════ */
   .offline-bar {
@@ -279,8 +285,7 @@
   .offline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
   .offline-dot.ready { background: var(--success); box-shadow: 0 0 8px var(--success); }
   .offline-dot.busy { background: var(--warn); animation: pulse 1s infinite; }
-  #dlAllBtn { padding: 14px 34px; font-size: 1rem; min-height: 52px; text-decoration: none; }
-  #dlAllBtn:disabled { opacity: 0.55; cursor: wait; }
+  #dlOfflineBtn:disabled { opacity: 0.55; cursor: wait; }
   .voice-pick { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
   .voice-pick .speaker-lang { width: auto; padding: 10px 14px; font-size: 0.82rem; }
   #voiceTestBtn { min-height: 44px; }
@@ -363,12 +368,18 @@
   .mic-btn {
     position: relative; z-index: 1;
     width: 80px; height: 80px; border-radius: 50%;
-    border: none; cursor: pointer;
+    border: 1px solid var(--border2); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem; transition: all 0.2s;
+    background: var(--surface3);
+    box-shadow: 0 4px 18px rgba(37,99,235,0.28);
+    transition: all 0.2s;
   }
-  .speaker-card.a .mic-btn { background: linear-gradient(135deg, #f4a742, #e08020); box-shadow: 0 4px 20px rgba(244,167,66,0.35); }
-  .speaker-card.b .mic-btn { background: linear-gradient(135deg, #42c8f4, #2080e0); box-shadow: 0 4px 20px rgba(66,200,244,0.35); }
+  .mic-btn img { width: 54px; height: 54px; display: block; }
+  .mic-btn .stop-ico { display: none; font-size: 1.7rem; color: var(--text); line-height: 1; }
+  .mic-btn.recording .mic-ico { display: none; }
+  .mic-btn.recording .stop-ico { display: block; }
+  .speaker-card.a .mic-btn { box-shadow: 0 4px 18px rgba(244,167,66,0.4); }
+  .speaker-card.b .mic-btn { box-shadow: 0 4px 18px rgba(66,200,244,0.4); }
   .mic-btn:hover { transform: scale(1.06); }
   .mic-btn:active { transform: scale(0.96); }
   .recording .mic-btn { animation: micPulse 0.8s ease-in-out infinite alternate; }
@@ -489,7 +500,6 @@
   @media (max-width: 480px) {
     .logo-name { display: none; }
     .header-inner { padding: 0 14px; gap: 10px; }
-    .tab-btn { padding: 6px 10px; font-size: 0.78rem; }
   }
   </style>
 </head>
@@ -503,18 +513,6 @@
       <span class="logo-name">Freeduck-<span>Translator</span></span>
     </a>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" id="tabTranslate" onclick="switchTab('translate')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3h8M5 1v2M3 3c0 2.5 2 4.5 4 5M7 3c-.5 2-2.5 4-4 5M8 9h5M13 7l-2 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Traductor
-      </button>
-      <button class="tab-btn" id="tabConv" onclick="switchTab('conv')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h6a1 1 0 011 1v4a1 1 0 01-1 1H4L2 10V3a1 1 0 011-1zM8 6h2a1 1 0 011 1v3l-2-1H7a1 1 0 01-1-1V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Conversación
-      </button>
-    </div>
-
     <div class="header-sep"></div>
 
     <div class="status-badge busy" id="badge">
@@ -526,14 +524,44 @@
 
 <!-- NOTICE -->
 <div class="notice">
-  <strong>⚡ Versión online</strong> — Motor: <strong style="color:var(--text2)">MyMemory</strong> · Gratuito · Sin registro · Sin API key · <strong style="color:var(--text2)">Offline beta</strong>: texto ES↔EN sin conexión (descarga el modelo una vez más abajo).
+  <strong>⚡ Versión online</strong> — Motor: <strong style="color:var(--text2)">MyMemory</strong> · Gratuito · Sin registro · Sin API key · <strong style="color:var(--text2)">Sin conexión</strong>: con el botón de arriba, el traductor y la conversación funcionan ES↔EN sin internet.
 </div>
 
 <!-- MAIN -->
 <main>
 
+  <!-- ══ MICRO REDONDO: la acción principal, arriba del todo ══ -->
+  <div class="voice-turn voice-turn-top" id="voiceTurn">
+    <button class="talk-btn" id="talkBtn" onclick="talkAndTranslate()" title="Pulsa para hablar, traduce y suena">
+      <img class="mic-ico" src="img/micro-azul-ondas.png" alt="Hablar y traducir" width="82" height="82">
+      <span class="stop-ico" aria-hidden="true">⏹</span>
+    </button>
+    <div class="voice-info">
+      <span class="voice-status" id="talkStatus">Pulsa el botón y habla</span>
+      <span class="voice-sub" id="talkHint">Habla en el idioma de origen · sonará en el idioma de destino · requiere internet (voz + traducción online).</span>
+      <label class="auto-row"><input type="checkbox" id="autoSwap" checked /> Cambio automático al idioma contrario tras cada intervención</label>
+    </div>
+    <button class="btn btn-outline" id="replyBtn" onclick="replyTurn()" title="La otra persona pulsa para contestar">↩ Responder</button>
+  </div>
+
+  <!-- ══ ACCIONES PRINCIPALES: conversar + descarga sin conexión ══ -->
+  <div class="cta-bar" id="ctaBar">
+    <button class="btn btn-primary" id="talkNowBtn" onclick="goConv()" title="Ir a la conversación por turnos">
+      <img src="img/micro-azul-ondas.png" alt="" width="26" height="26" class="cta-ico">
+      Conversar
+    </button>
+    <button class="btn btn-outline" id="dlOfflineBtn" onclick="downloadAllOffline()" title="Baja todo lo necesario para usar sin conexión (una sola vez)">
+      ⬇ Descarga para usar sin conexión
+    </button>
+    <span class="cta-note" id="dlAllStatus">Todo lo offline: ~140 MB una vez (modelos, voces y dictado ES/EN).</span>
+  </div>
+
   <!-- ══ PAGE: TRADUCTOR ══ -->
-  <div class="page active" id="pageTranslate">
+  <div class="page" id="pageTranslate">
+    <div class="section-head">
+      <span class="section-title">Traductor</span>
+      <div class="section-line"></div>
+    </div>
     <div class="card">
       <div class="lang-bar">
         <div class="lang-panel">
@@ -672,24 +700,12 @@
       Borrar <kbd>Esc</kbd>
     </div>
 
-    <!-- Voz por turnos: hablar → suena traducido → cambio auto al idioma contrario -->
-    <div class="voice-turn" id="voiceTurn">
-      <button class="talk-btn" id="talkBtn" onclick="talkAndTranslate()" title="Pulsa para hablar">🎤</button>
-      <div class="voice-info">
-        <span class="voice-status" id="talkStatus">Pulsa el botón y habla</span>
-        <span class="voice-sub" id="talkHint">Habla en el idioma de origen · sonará en el idioma de destino · requiere internet (voz + traducción online).</span>
-        <label class="auto-row"><input type="checkbox" id="autoSwap" checked /> Cambio automático al idioma contrario tras cada intervención</label>
-      </div>
-      <button class="btn btn-outline" id="replyBtn" onclick="replyTurn()" title="La otra persona pulsa para contestar">↩ Responder</button>
-      <a class="btn btn-primary" id="dlBtn" href="#descargas" title="Ir a las descargas">⬇ Descargar</a>
-    </div>
-
     <!-- Motor offline (texto, voces y dictado ES/EN sin conexión tras descarga única) -->
     <div class="offline-bar" id="offlineBar">
       <span class="offline-dot" id="offlineDot"></span>
       <div class="voice-info">
         <span class="voice-status" id="offlineStatus">Motor offline: cargando…</span>
-        <span class="voice-sub" id="offlineHint">Texto, voces y dictado ES/EN funcionan sin conexión tras la descarga única de abajo.</span>
+        <span class="voice-sub" id="offlineHint">Texto, voces y dictado ES/EN funcionan sin conexión tras la descarga única de arriba.</span>
         <span class="voice-sub" id="offlineReady">Sin conexión listo: comprobando…</span>
         <span class="voice-sub" id="voiceEngine">Voz: natural (principal)</span>
         <span class="voice-sub" id="voiceLoad">Robótica: ES … / EN …</span>
@@ -704,14 +720,12 @@
         <button class="btn btn-ghost" id="speakerTestBtn" onclick="speakerTest()" title="Pitar sin motores: si no suena, el problema es tu dispositivo">🔔 Altavoz</button>
       </div>
       <div class="voice-pick">
-        <span class="voice-sub" id="kokoroStatus">Voz natural: comprobando…</span>
+        <span class="voice-sub" id="vozNaturalStatus">Voz natural: comprobando…</span>
       </div>
       <div class="voice-pick">
         <span class="voice-sub" id="sttStatus">Dictado offline: comprobando…</span>
       </div>
-      <span class="voice-sub" id="dlAllStatus">Todo lo offline: ~140 MB una vez (modelos, voces y dictado ES/EN).</span>
       <div class="voice-pick">
-        <button class="btn btn-primary" id="dlAllBtn" onclick="downloadAllOffline()">⬇ Descargar todo offline</button>
         <button class="btn btn-ghost" id="wipeBtn" onclick="wipeAllOffline()">Borrar todo</button>
       </div>
     </div>
@@ -726,8 +740,12 @@
     </div>
   </div>
 
-  <!-- ══ PAGE: CONVERSACIÓN ══ -->
+  <!-- ══ PAGE: CONVERSACIÓN (lo principal) ══ -->
   <div class="page" id="pageConv">
+    <div class="section-head">
+      <span class="section-title">Conversación</span>
+      <div class="section-line"></div>
+    </div>
 
     <!-- No speech fallback -->
     <div class="no-speech" id="noSpeech" style="display:none">
@@ -791,7 +809,10 @@
           </select>
           <div class="mic-wrap">
             <div class="mic-rings"></div>
-            <button class="mic-btn" id="micA" onclick="startListen('a')" title="Mantén pulsado para hablar">🎤</button>
+            <button class="mic-btn" id="micA" onclick="startListen('a')" title="Mantén pulsado para hablar">
+              <img class="mic-ico" src="img/micro-azul-ondas.png" alt="Hablar" width="54" height="54">
+              <span class="stop-ico" aria-hidden="true">⏹</span>
+            </button>
           </div>
           <span class="mic-status" id="statusA">Pulsa para hablar</span>
           <div class="speaker-last" id="lastA">Aquí aparecerá lo que digas…</div>
@@ -842,7 +863,10 @@
           </select>
           <div class="mic-wrap">
             <div class="mic-rings"></div>
-            <button class="mic-btn" id="micB" onclick="startListen('b')" title="Mantén pulsado para hablar">🎤</button>
+            <button class="mic-btn" id="micB" onclick="startListen('b')" title="Mantén pulsado para hablar">
+              <img class="mic-ico" src="img/micro-azul-ondas.png" alt="Hablar" width="54" height="54">
+              <span class="stop-ico" aria-hidden="true">⏹</span>
+            </button>
           </div>
           <span class="mic-status" id="statusB">Pulsa para hablar</span>
           <div class="speaker-last" id="lastB">Here what you say will appear…</div>
@@ -877,7 +901,7 @@
         <h3>Cómo descargarlo y usarlo</h3>
         <ol>
           <li><strong>Instalar como app (recomendado):</strong> abre esta página en Chrome (móvil u ordenador) → menú ⋮ → «Instalar Freeduck-Translator» o «Añadir a pantalla de inicio». Aparecerá el icono del pato con tus apps.</li>
-          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa <strong>⬇ Descargar todo offline</strong> y espera a que la línea «Sin conexión listo» quede toda en ✓.</li>
+          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa <strong>⬇ Descarga para usar sin conexión</strong> y espera a que la línea «Sin conexión listo» quede toda en ✓.</li>
           <li><strong>Usarlo sin conexión:</strong> activa el modo avión y dicta o escribe para traducir ES↔EN y escuchar. El dictado sin red usa el reconocedor local (más lento la primera vez).</li>
           <li><strong>Conversación:</strong> cada persona pulsa su micrófono (Persona A / Persona B); la app traduce y habla sola con la voz elegida. Con «Cambio automático», los idiomas se alternan solos.</li>
         </ol>
@@ -924,9 +948,12 @@
 <script>
 // Registro del Service Worker (PWA). Solo funciona servido por HTTP(S),
 // no desde file://. Falla en silencio si no hay soporte.
-if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+const SW_DISPONIBLE = 'serviceWorker' in navigator && location.protocol.indexOf('http') === 0;
+if (SW_DISPONIBLE) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js').catch((e) => {
+      console.warn('[Freeduck] No se pudo registrar el service worker: el modo sin conexión no funcionará.', e);
+    });
   });
 }
 </script>
@@ -1016,17 +1043,18 @@ function localizeLangOptions() {
 ══════════════════════════════════════════════════════ */
 let hist       = loadHist();
 let lastText   = '';
-let ttsPlaying = false;
 let activeRec  = null;   // SpeechRecognition instance activa
 let activeSide = null;   // 'a' | 'b'
+let ttsPlaying = false;   // hay una locución en curso
 let offlineMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
 let offlineTries = 0;
-let kokoroMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
-let kokoroTries = 0;
+let vozMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
+let vozTries = 0;
 let sttMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
 let sttTries = 0;
 let localConv = null; // { side, from, to } grabando sin conexión (conversación)
 let localTalk = null; // { from, to } grabando sin conexión (botón grande)
+let dlAllBusy = false; // descarga única de todo lo offline en marcha
 
 /* Almacenamiento local seguro: nunca se confía en lo que haya guardado
    (puede estar corrupto o manipulado) y los fallos de cuota se ignoran. */
@@ -1061,7 +1089,7 @@ function saveHist() {
 /* Los módulos offline avisan al cargar; la interfaz refresca al recibirlos
    (más fiable que sondear con temporizadores). */
 window.addEventListener('freeduck:offline-ready', () => { if (typeof refreshOfflineBar === 'function') refreshOfflineBar(); });
-window.addEventListener('freeduck:voice-ready', () => { if (typeof refreshKokoro === 'function') refreshKokoro(); });
+window.addEventListener('freeduck:voice-ready', () => { if (typeof refreshVozNatural === 'function') refreshVozNatural(); });
 window.addEventListener('freeduck:stt-ready', () => { if (typeof refreshSTT === 'function') refreshSTT(); });
 
 /* ══════════════════════════════════════════════════════
@@ -1138,7 +1166,7 @@ window.addEventListener('freeduck:stt-ready', () => { if (typeof refreshSTT === 
   }
 
   refreshOfflineBar();
-  refreshKokoro();
+  refreshVozNatural();
   refreshSTT();
   refreshReadyMatrix();
 
@@ -1154,15 +1182,12 @@ function sel(id, val) {
 /* ══════════════════════════════════════════════════════
    TABS
 ══════════════════════════════════════════════════════ */
-function switchTab(tab) {
-  document.getElementById('pageTranslate').classList.toggle('active', tab === 'translate');
-  document.getElementById('pageConv').classList.toggle('active', tab === 'conv');
-  document.getElementById('tabTranslate').classList.toggle('active', tab === 'translate');
-  document.getElementById('tabConv').classList.toggle('active', tab === 'conv');
-  // Stop any ongoing recognition when switching tabs
-  if (activeRec) { activeRec.stop(); activeRec = null; }
-  if (typeof localConv !== 'undefined' && localConv && window.LocalSTT) { try { LocalSTT.abort(); } catch {} localConv = null; }
-  if (typeof localTalk !== 'undefined' && localTalk && window.LocalSTT) { try { LocalSTT.abort(); } catch {} localTalk = null; }
+function goConv() {
+  const conv = document.getElementById('pageConv');
+  if (!conv) return;
+  conv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  conv.classList.add('flash');
+  setTimeout(() => conv.classList.remove('flash'), 1300);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1206,9 +1231,17 @@ async function translateText(text, fromCode, toCode) {
 /* ══════════════════════════════════════════════════════
    TTS (síntesis)
 ══════════════════════════════════════════════════════ */
+/* Marca visual de que está sonando (resalta el botón de escuchar). */
+function marcarHablando(hablando) {
+  ttsPlaying = hablando;
+  const btn = document.getElementById('ttsBtn');
+  if (btn) btn.classList.toggle('on', hablando);
+}
+
 function speakText(text, langCode) {
   // Devuelve 'natural' | 'robot' | 'system' | null.
   // Todas estrictas: cada preferencia usa solo su motor.
+  marcarHablando(true);
   return (async () => {
     const pref = voicePref();
     // 'natural' usa SOLO la voz natural (sin reservas a la robótica);
@@ -1227,7 +1260,7 @@ function speakText(text, langCode) {
           toast('❌ La voz natural falló al hablar', 4000);
           return null;
         }
-        toast(`⬇ Falta la voz ${voiceLangName(langCode)}: pulsa «Descargar voz natural» con destino ${voiceLangName(langCode)}`, 6000);
+        toast(`⬇ Falta la voz natural de ${voiceLangName(langCode)}: pulsa «⬇ Descarga para usar sin conexión» (todo junto).`, 6000);
         return null;
       } catch {
         return null;
@@ -1273,7 +1306,7 @@ function speakText(text, langCode) {
       setTimeout(() => { clearInterval(keep); res(); }, 60000);
     });
     return 'system';
-  })();
+  })().finally(() => marcarHablando(false));
 }
 
 function stopAllVoices() {
@@ -1484,11 +1517,11 @@ function setRecordingUI(side, isRecording) {
 
   if (isRecording) {
     card.classList.add('recording');
-    micBtn.textContent = '⏹';
+    micBtn.classList.add('recording');
     status.textContent = 'Escuchando… (pulsa para parar)';
   } else {
     card.classList.remove('recording');
-    micBtn.textContent = '🎤';
+    micBtn.classList.remove('recording');
   }
 }
 
@@ -1690,7 +1723,7 @@ function onLangChange() {
   lastText = '';
   if (typeof updateTalkLabels === 'function' && !talkRec) updateTalkLabels();
   if (typeof refreshOfflineBar === 'function') refreshOfflineBar();
-  if (typeof refreshKokoro === 'function') refreshKokoro();
+  if (typeof refreshVozNatural === 'function') refreshVozNatural();
 }
 
 function clearAll() {
@@ -1781,10 +1814,7 @@ function updateTalkLabels(status) {
 function setTalkUI(listening, status) {
   const btn = document.getElementById('talkBtn');
   const reply = document.getElementById('replyBtn');
-  if (btn) {
-    btn.classList.toggle('listening', listening);
-    btn.textContent = listening ? '⏹' : '🎤';
-  }
+  if (btn) btn.classList.toggle('listening', listening);
   if (reply) reply.disabled = listening;
   if (status) document.getElementById('talkStatus').textContent = status;
 }
@@ -1999,15 +2029,13 @@ async function refreshOfflineBar() {
   } else {
     offlineMode = 'missing';
     dot.className = 'offline-dot';
-    status.textContent = `Modelo ${voiceLangName(from)}→${voiceLangName(to)} no descargado (pulsa «Descargar todo offline»)`;
+    status.textContent = `Modelo ${voiceLangName(from)}→${voiceLangName(to)} no descargado (pulsa «⬇ Descarga para usar sin conexión» arriba)`;
   }
   if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 /* Descarga TODO lo offline de una vez (modelos ES↔EN, voces ES+EN y
    dictado): ~140 MB una sola vez, con progreso global. Sin fases. */
-let dlAllBusy = false;
-
 async function downloadAllOffline() {
   if (dlAllBusy) return;
   // Espera a los motores (módulos diferidos): hasta 30 s, no fallo directo.
@@ -2021,15 +2049,18 @@ async function downloadAllOffline() {
     return;
   }
   dlAllBusy = true;
-  const btn = document.getElementById('dlAllBtn');
+  const btn = document.getElementById('dlOfflineBtn');
   const st = document.getElementById('dlAllStatus');
   btn.disabled = true;
 
+  const origLabel = btn.textContent;
   const show = (i, n, label, loaded, total) => {
     const mb = (loaded / 1048576).toFixed(0);
+    const pct = total ? Math.round(loaded / total * 100) : null;
     st.textContent = total
-      ? `Descargando todo ${i}/${n}: ${label}… ${mb} de ${(total / 1048576).toFixed(0)} MB (${Math.round(loaded / total * 100)}%)`
-      : `Descargando todo ${i}/${n}: ${label}… ${mb} MB`;
+      ? `Descargando ${i}/${n}: ${label}… ${mb} de ${(total / 1048576).toFixed(0)} MB (${pct}%)`
+      : `Descargando ${i}/${n}: ${label}… ${mb} MB`;
+    btn.textContent = pct === null ? '⬇ Descargando…' : `⬇ Descargando… ${pct}%`;
   };
   const tasks = [
     ['modelo ES→EN', (cb) => Offline.download('es', 'en', (got, total) => cb(got, total))],
@@ -2049,9 +2080,10 @@ async function downloadAllOffline() {
   }
   dlAllBusy = false;
   btn.disabled = false;
-  st.textContent = 'Todo lo offline: ~140 MB una vez (modelos, voces y dictado ES/EN).';
+  btn.textContent = origLabel;
+  st.textContent = 'Comprobando lo descargado…';
   refreshOfflineBar();
-  refreshKokoro();
+  refreshVozNatural();
   refreshSTT();
   if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
   if (!fallos.length) toast('✓ Todo descargado. Ya funciona sin conexión.', 6000);
@@ -2075,7 +2107,7 @@ async function wipeAllOffline() {
     toast('❌ No se pudo borrar todo', 4000);
   }
   refreshOfflineBar();
-  refreshKokoro();
+  refreshVozNatural();
   refreshSTT();
   if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
@@ -2083,25 +2115,25 @@ async function wipeAllOffline() {
 /* ══════════════════════════════════════════════════════
    VOZ NATURAL OFFLINE (Piper/sherpa ES/EN, descarga una vez)
 ══════════════════════════════════════════════════════ */
-/* (kokoroMode/kokoroTries declarados arriba con el resto del estado) */
+/* (vozMode/vozTries declarados arriba con el resto del estado) */
 
-async function refreshKokoro() {
-  const st = document.getElementById('kokoroStatus');
+async function refreshVozNatural() {
+  const st = document.getElementById('vozNaturalStatus');
   if (!st) return;
   const to = document.getElementById('tgtLang').value;
 
   if (!('caches' in window) || !window.SherpaVoice) {
-    if (kokoroTries++ < 40) {
+    if (vozTries++ < 40) {
       st.textContent = 'Voz natural: cargando…';
-      setTimeout(refreshKokoro, 500);
+      setTimeout(refreshVozNatural, 500);
     } else {
-      kokoroMode = 'unavailable';
+      vozMode = 'unavailable';
       st.textContent = 'Voz natural no disponible en este navegador';
     }
     return;
   }
   if (!SherpaVoice.isSupported(to)) {
-    kokoroMode = 'unsupported';
+    vozMode = 'unsupported';
     st.textContent = 'Voz natural disponible para ES/EN por ahora';
     return;
   }
@@ -2110,17 +2142,17 @@ async function refreshKokoro() {
   try { ready = await SherpaVoice.isReady(to); } catch { ready = false; }
   if (document.getElementById('tgtLang').value !== to) return;
   if (ready) {
-    kokoroMode = 'ready';
+    vozMode = 'ready';
     st.textContent = `✓ Voz natural ${voiceLangName(to)} lista (sin conexión)`;
   } else {
-    kokoroMode = 'missing';
-    st.textContent = `Voz natural ${voiceLangName(to)}: sin descargar (pulsa «Descargar todo offline»)`;
+    vozMode = 'missing';
+    st.textContent = `Voz natural ${voiceLangName(to)}: sin descargar (pulsa «⬇ Descarga para usar sin conexión» arriba)`;
   }
   if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 /* Resumen de lo listo para usar sin conexión (texto y voces, ambos
-   sentidos). Para que valga, hay que pulsar «Descargar todo offline»
+   sentidos). Para que valga, hay que pulsar «⬇ Descarga para usar sin conexión»
    DENTRO de la app con internet; bajar el ZIP no prepara nada. */
 async function refreshReadyMatrix() {
   const el = document.getElementById('offlineReady');
@@ -2144,6 +2176,24 @@ async function refreshReadyMatrix() {
   } catch {}
   const mark = (ok) => ok ? '✓' : '✗';
   el.textContent = `Sin conexión listo: texto ES→EN ${mark(tEN)} · EN→ES ${mark(tES)} · voz natural ES ${mark(vES)} / EN ${mark(vEN)} · robótica ES ${mark(rES)} / EN ${mark(rEN)} · dictado ${mark(stt)}`;
+
+  // La nota del botón de arriba: verde cuando ya está todo descargado
+  const nota = document.getElementById('dlAllStatus');
+  if (nota && !dlAllBusy) {
+    const todo = tEN && tES && vES && vEN && stt;
+    nota.classList.toggle('ready', todo);
+    nota.textContent = todo
+      ? '✓ Todo listo: conversación y traductor funcionan sin conexión.'
+      : 'Pulsa «Descarga para usar sin conexión» (una vez, ~140 MB: modelos, voces y dictado ES/EN).';
+  }
+
+  // «Borrar todo» solo tiene sentido si hay algo descargado.
+  const wipe = document.getElementById('wipeBtn');
+  if (wipe) {
+    wipe.disabled = !(
+      offlineMode === 'ready' || vozMode === 'ready' || sttMode === 'ready'
+    );
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -2172,7 +2222,7 @@ async function refreshSTT() {
     st.textContent = '✓ Dictado offline listo (ES/EN, sin conexión)';
   } else {
     sttMode = 'missing';
-    st.textContent = 'Dictado offline: sin descargar (pulsa «Descargar todo offline»)';
+    st.textContent = 'Dictado offline: sin descargar (pulsa «⬇ Descarga para usar sin conexión» arriba)';
   }
 }
 
@@ -2205,7 +2255,7 @@ function restoreHist(i) {
   document.getElementById('srcText').value = h.src;
   document.getElementById('tgtText').value = h.tgt;
   sel('srcLang', h.srcL); sel('tgtLang', h.tgtL);
-  onInput(); switchTab('translate');
+  onInput();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

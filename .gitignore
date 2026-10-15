@@ -9,3 +9,10 @@ opencode/
 # Runtimes STT que GitHub marca como secretos: los sirve el SW desde CDN
 vendor/stt/transformers.min.js
 vendor/stt/ort-wasm-simd-threaded.asyncify.wasm
+
+# Imágenes originales (~1 MB cada una) de las que salen las versiones
+# optimizadas que sí viajan en el repo (img/micro-azul-ondas.png).
+# Sin comillas: en .gitignore son literales y no casarían.
+img/Icono de micrófono azul con ondas.png
+img/Emblema rúnico de micrófono nórdico.png
+*.aiff

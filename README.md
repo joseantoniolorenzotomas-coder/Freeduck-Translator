@@ -23,7 +23,7 @@ Abre **http://localhost:8901** en Chrome o Edge (con `localhost`, no `127.0.0.1`
 - 📴 **Offline real ES↔EN**: texto (Bergamot/Mozilla) y voz natural (Piper/sherpa). Descarga el modelo y la voz una vez desde la propia app y corta la red para comprobarlo.
 - 🗣️ **Conversación a dos voces**: cada persona pulsa su micro; traduce y reproduce solo con la voz elegida (natural principal, robótica divertida o sistema).
 - 🤖 Voz robótica offline ES/EN incluida; 🔊 selector de voz con testigo de qué sonó.
-- 📲 PWA instalable + sección de **Descargas** (ZIP con la app completa).
+- 📲 PWA instalable; se prepara el sin conexión con un solo botón.
 - 📝 Historial local (50), atajos de teclado, responsive.
 
 ## 🧪 Pruebas
@@ -44,7 +44,7 @@ offline.js            ← Motor de traducción offline (Bergamot)
 voice-sherpa.js       ← Voz natural offline (Piper/sherpa)
 models/               ← Modelos ES↔EN (~49 MB, MPL-2.0)
 voices/               ← Voces ES/EN (~41 MB)
-vendor/               ← bergamot, mespeak (GPL-3.0), sherpa (Apache-2.0), kokoro retirado
+vendor/               ← bergamot, mespeak (GPL-3.0), sherpa (Apache-2.0)
 img/                  ← Logo, fondo e iconos PWA
 electron/             ← Ejecutables de escritorio (npm run dist)
 tests/                ← Suite de pruebas
