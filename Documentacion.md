@@ -118,6 +118,9 @@ Si una función necesita internet —por ejemplo, descargar inicialmente un mode
   recarga sin red, traduce ES→EN correctamente con el distintivo
   «Offline · es→en» y reproduce la voz con el motor local («natural»).
   Procedimiento: descargar modelo+voz una vez, cortar la red y traducir.
+- Dictado offline (Whisper tiny q8, Apache-2.0, ~42 MB, ES+EN con una sola
+  descarga): verificado en navegador 2026-10-15 (audio real ES transcrito
+  bien en ~3 s). Con red se usa el dictado del navegador (más rápido).
 - Voz offline robótica (eSpeak vía meSpeak, GPL-3.0) incluida para ES/EN
   desde la instalación, sin descarga adicional. Si el modo worker falla
   (p. ej. abriendo por `file://`), la app reintenta en modo simple
@@ -172,6 +175,10 @@ Antes de distribuir código, bibliotecas, modelos o datos, se documentarán sus 
   Orígenes: https://github.com/k2-fsa/sherpa-onnx y
   https://huggingface.co/rhasspy/piper-voices
   Datos de voz sharvard: CC-BY 3.0 (atribución incluida).
+- **@huggingface/transformers + onnxruntime-web** (dictado offline,
+  `vendor/stt/`, con parche de ruta local documentado): Apache-2.0 y MIT.
+- **Modelo Xenova/whisper-tiny q8** (~42 MB, se descarga una vez, no viaja
+  en el ZIP): Apache-2.0. Origen: https://huggingface.co/Xenova/whisper-tiny
 - **nginx:alpine** (imagen Docker, solo para servir en local): BSD-2-Clause.
 - Atribución completa en `vendor/bergamot/NOTICE.txt`,
   `vendor/mespeak/NOTICE.txt` y `vendor/sherpa/NOTICE.txt`.

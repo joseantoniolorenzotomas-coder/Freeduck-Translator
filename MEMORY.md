@@ -102,7 +102,7 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-14).
 
 ### 2026-10-14 — Voz en nube (prioridad online) — ANULADA
-- **Estado:** Anulada al sustituir Kokoro por Piper+sherpa (se elimina el código de nube y el token). Se conserva el registro histórico.
+- **Estado:** Anulada al sustituir Kokoro por Piper+sherpa (se elimina el código de nube y el token). Se conserva el registro histórico:
 - **Decisión:** Añadir opción «Voz: ☁️ nube» que sintetiza con Kokoro vía API de Hugging Face (mismo modelo, sin descargas ni WASM). Requiere token gratuito del usuario (se guarda en su navegador) e internet.
 - **Motivo:** La prioridad del propietario es usar la voz natural online ya; la vía local sigue atascada sin verificar.
 - **Consecuencias:** El texto traducido sale del dispositivo (privacidad: solo bajo elección explícita, jamás en automático). La voz española del servidor puede variar; pendiente de verificar con token real. Sin token verificado aquí: solo se probó el camino sin-token (aviso correcto, sin errores).
@@ -112,6 +112,13 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Decisión:** La marca pasa a «Freeduck-Translator» en título, cabecera, manifiesto, pie, Electron (nombre, appId `com.freeducktranslator.app`, acceso directo) y ZIP (`freeduck-translator-pwa-v0.1.zip`). Los ejecutables `electron/dist/` conservan el nombre viejo hasta recompilar.
 - **Motivo:** Petición del propietario.
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-14).
+
+### 2026-10-15 — Dictado offline: Whisper tiny (conversación completa sin red)
+- **Decisión:** Integrar Xenova/whisper-tiny q8 (~42 MB, Apache-2.0) con Transformers.js + ONNX Runtime Web vendoriados (parche de ruta local documentado). Una sola descarga vale ES+EN. Sin red, los micros usan el dictado local; con red, el del navegador.
+- **Motivo:** Petición del propietario: sin dictado offline no hay conversación offline real.
+- **Estado:** Transcripción verificada en navegador (audio ES real → texto correcto en ~3 s). Grabación por micro pendiente de probar en dispositivo real (sin micro en el entorno de pruebas).
+- **Consecuencias:** ~42 MB más de descarga opcional. Privacidad: el audio no sale del dispositivo en modo offline.
+- **Aprobada por:** propietario del proyecto (sesión 2026-10-15).
 
 ## Pendiente de decidir
 - App nativa móvil (APK Android / IPA iOS) frente a solo PWA instalable.

@@ -1,0 +1,18 @@
+Dictado offline incluido en FreeDuck (Whisper tiny, ES/EN).
+
+- Runtime: @huggingface/transformers (Apache-2.0) + onnxruntime-web (MIT),
+  con UN parche documentado: la ruta base de los binarios WASM apuntaba al
+  CDN de jsDelivr; se redirige al vendor local para funcionar sin conexión
+  y sin terceros. El .wasm de ONNX (~27 MB) NO viaja en el repo (GitHub lo
+  marca como secreto): lo sirve el Service Worker desde el CDN oficial en
+  la primera carga y queda en caché.
+  Archivos: transformers.min.js + ort-wasm-simd-threaded.asyncify.mjs/.wasm
+  (de onnxruntime-web 1.30.0).
+
+- Modelo: Xenova/whisper-tiny (cuantización q8, ~42 MB: encoder ~10 MB +
+  decodificador ~31 MB), Apache-2.0.
+  Origen: https://huggingface.co/Xenova/whisper-tiny
+  El modelo NO se incluye aquí: se descarga una vez (con conexión) y el
+  navegador lo guarda en caché para transcribir sin conexión.
+
+Atribución: este archivo + Documentacion.md §8.

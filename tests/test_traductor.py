@@ -140,8 +140,11 @@ def main():
         mscript = re.search(r"script-src ([^;]+)", c)
         check("csp-wasm-unsafe-eval",
               bool(mscript) and "'wasm-unsafe-eval'" in mscript.group(1)
-              and "'unsafe-eval'" not in mscript.group(1).replace("'wasm-unsafe-eval'", ""),
+              and "'unsafe-eval'" not in mscript.group(1).replace("'wasm-unsafe-eval'", "")
+              and "blob:" in mscript.group(1),
               mscript.group(1) if mscript else "sin script-src")
+        check("csp-worker-src",
+              "worker-src 'self' blob:" in c)
     if csp:
         c = csp.group(1)
         check("csp-sin-objects",
@@ -406,14 +409,14 @@ def main():
           'onclick="micTest()"' in html and "function micTest(" in js
           and "getUserMedia" in js and "isSecureContext" in js)
     check("micro-solo-online",
-          "el micrófono necesita internet" in js
-          and "el dictado es siempre online" in js.lower())
+          "startListenOffline" in js and "talkOffline" in js
+          and "LocalSTT" in js)
     check("error-con-motivo",
           "Error al traducir. Comprueba" not in js
           and "String(err.message || 'Error de conexión')" in js)
     check("matriz-offline",
           'id="offlineReady"' in html and "function refreshReadyMatrix(" in js
-          and "Sin conexión listo" in js)
+          and "Sin conexión listo" in js and "dictado ${mark(stt)}" in js)
     check("guia-descargas",
           "Cómo descargarlo y usarlo" in html and "modo avión" in html
           and "Añadir a pantalla de inicio" in html)
@@ -492,17 +495,36 @@ def main():
           "cache: 'reload'" in sw and "caches.match(event.request)" in sw)
     check("sw-solo-cachea-ok",
           sw.count("if (!res.ok) throw") >= 2)
-    check("csp-sin-hf",
-          "huggingface.co" not in (csp.group(1) if csp else "")
-          and "hf.co" not in (csp.group(1) if csp else ""))
+    check("csp-hosts-justificados",
+          "api.mymemory.translated.net" in (csp.group(1) if csp else "")
+          and "huggingface.co" in (csp.group(1) if csp else ""),
+          "MyMemory (traducción) + Hugging Face (modelos/whisper)")
 
     # ---------- 6j. regresión: estado antes de init (TDZ) ----------
     pos_init = js.find("(function init()")
     tdz_mal = [v for v in ("offlineMode", "offlineTries", "kokoroMode",
-                           "kokoroTries", "hist", "lastText", "activeRec")
+                           "kokoroTries", "hist", "lastText", "activeRec",
+                           "localConv", "localTalk", "sttMode", "sttTries")
                if js.find("let " + v) == -1 or js.find("let " + v) > pos_init]
     check("estado-antes-de-init", not tdz_mal and pos_init != -1,
           "" if not tdz_mal else f"declarados tarde: {tdz_mal}")
+    check("dictado-offline-ui",
+          all(x in html for x in ("sttStatus", "sttBtn", "refreshSTT", "sttAction"))
+          and all(("function " + f + "(") in js for f in
+                  ("startListenOffline", "stopLocalConv", "talkOffline",
+                   "stopLocalTalk", "translateAuto", "talkAfterSpeech"))
+          and "freeduck:stt-ready" in js)
+    check("dictado-offline-motor",
+          all((ROOT / f).exists() for f in
+              ("vendor/stt/ort-wasm-simd-threaded.asyncify.mjs",
+               "vendor/stt/NOTICE.txt", "voice-whisper.js"))
+          and not (ROOT / "vendor/stt/transformers.min.js").exists()
+          and not (ROOT / "vendor/stt/ort-wasm-simd-threaded.asyncify.wasm").exists()
+          and "Xenova/whisper-tiny" in (ROOT / "voice-whisper.js").read_text(encoding="utf-8")
+          and "MediaRecorder" in (ROOT / "voice-whisper.js").read_text(encoding="utf-8"))
+    check("stt-runtime-por-cdn",
+          "CDN_FALLBACK" in sw and "TRANSFORMERS_CDN" in sw and "ORT_WASM_CDN" in sw
+          and "cdn.jsdelivr.net" in (csp.group(1) if csp else ""))
 
     # ---------- 6h. modelos offline empaquetados ----------
     reg_path = ROOT / "models" / "registry.json"

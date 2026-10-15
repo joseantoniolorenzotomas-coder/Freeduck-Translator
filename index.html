@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Freeduck-Translator" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.mymemory.translated.net; object-src 'none'; base-uri 'self'; form-action 'none';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.mymemory.translated.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.huggingface.co https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; form-action 'none';" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -707,6 +707,10 @@
         <span class="voice-sub" id="kokoroStatus">Voz natural: comprobando…</span>
         <button class="btn btn-outline" id="kokoroBtn" onclick="kokoroAction()" style="display:none">⬇ Descargar voz natural</button>
       </div>
+      <div class="voice-pick">
+        <span class="voice-sub" id="sttStatus">Dictado offline: comprobando…</span>
+        <button class="btn btn-outline" id="sttBtn" onclick="sttAction()" style="display:none">⬇ Descargar dictado</button>
+      </div>
       <button class="btn btn-outline" id="offlineBtn" onclick="offlineAction()" style="display:none">Descargar modelo</button>
     </div>
 
@@ -871,8 +875,8 @@
         <h3>Cómo descargarlo y usarlo</h3>
         <ol>
           <li><strong>Instalar como app (recomendado):</strong> abre esta página en Chrome (móvil u ordenador) → menú ⋮ → «Instalar Freeduck-Translator» o «Añadir a pantalla de inicio». Aparecerá el icono del pato con tus apps.</li>
-          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa «Descargar modelo» (los dos sentidos ES→EN y EN→ES) y «Descargar voz natural» (los dos idiomas). La línea «Sin conexión listo» debe quedar toda en ✓.</li>
-          <li><strong>Usarlo sin conexión:</strong> activa el modo avión y traduce por escrito ES↔EN y escucha con la voz elegida. El <strong>dictado por micrófono siempre necesita internet</strong> (el móvil lo reconoce en la nube).</li>
+          <li><strong>Preparar el sin conexión (una vez, con internet):</strong> más arriba, pulsa «Descargar modelo» (los dos sentidos ES→EN y EN→ES), «Descargar voz natural» (los dos idiomas) y «Descargar dictado» (vale para ES+EN). La línea «Sin conexión listo» debe quedar toda en ✓.</li>
+          <li><strong>Usarlo sin conexión:</strong> activa el modo avión y dicta o escribe para traducir ES↔EN y escuchar. El dictado sin red usa el reconocedor local (más lento la primera vez).</li>
           <li><strong>Conversación:</strong> cada persona pulsa su micrófono (Persona A / Persona B); la app traduce y habla sola con la voz elegida. Con «Cambio automático», los idiomas se alternan solos.</li>
           <li><strong>Archivo ZIP:</strong> el botón «Descargar archivos» baja la app completa para guardarla o subirla a tu propio hosting (descomprime y sírvela por HTTP).</li>
         </ol>
@@ -920,6 +924,7 @@
 <script src="vendor/sherpa/piper-phonemize/piper-phonemize.js"></script>
 <script src="vendor/sherpa/piper-phonemize/piper-phonemize-wasm-main.js"></script>
 <script type="module" src="voice-sherpa.js"></script>
+<script type="module" src="voice-whisper.js"></script>
 <script type="module" src="offline.js"></script>
 <script>
 // Registro del Service Worker (PWA). Solo funciona servido por HTTP(S),
@@ -1023,6 +1028,10 @@ let offlineMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
 let offlineTries = 0;
 let kokoroMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
 let kokoroTries = 0;
+let sttMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
+let sttTries = 0;
+let localConv = null; // { side, from, to } grabando sin conexión (conversación)
+let localTalk = null; // { from, to } grabando sin conexión (botón grande)
 
 /* Almacenamiento local seguro: nunca se confía en lo que haya guardado
    (puede estar corrupto o manipulado) y los fallos de cuota se ignoran. */
@@ -1058,6 +1067,7 @@ function saveHist() {
    (más fiable que sondear con temporizadores). */
 window.addEventListener('freeduck:offline-ready', () => { if (typeof refreshOfflineBar === 'function') refreshOfflineBar(); });
 window.addEventListener('freeduck:voice-ready', () => { if (typeof refreshKokoro === 'function') refreshKokoro(); });
+window.addEventListener('freeduck:stt-ready', () => { if (typeof refreshSTT === 'function') refreshSTT(); });
 
 /* ══════════════════════════════════════════════════════
    INIT
@@ -1134,6 +1144,7 @@ window.addEventListener('freeduck:voice-ready', () => { if (typeof refreshKokoro
 
   refreshOfflineBar();
   refreshKokoro();
+  refreshSTT();
   refreshReadyMatrix();
 
   renderHist();
@@ -1155,6 +1166,8 @@ function switchTab(tab) {
   document.getElementById('tabConv').classList.toggle('active', tab === 'conv');
   // Stop any ongoing recognition when switching tabs
   if (activeRec) { activeRec.stop(); activeRec = null; }
+  if (typeof localConv !== 'undefined' && localConv && window.LocalSTT) { try { LocalSTT.abort(); } catch {} localConv = null; }
+  if (typeof localTalk !== 'undefined' && localTalk && window.LocalSTT) { try { LocalSTT.abort(); } catch {} localTalk = null; }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1355,18 +1368,17 @@ function startListen(side) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
 
-  // El dictado es siempre online (el navegador lo reconoce en la nube):
-  // sin conexión no se puede escuchar; sí traducir por escrito y oír.
-  if (navigator.onLine === false) {
-    toast('📵 Sin conexión: el micrófono necesita internet. Escribe el texto y usa el altavoz.', 5000);
-    return;
-  }
+  // Sin conexión se usa el dictado local (Whisper); con conexión, el del
+  // navegador (más rápido). La escucha local necesita el modelo descargado.
+  if (navigator.onLine === false) { startListenOffline(side); return; }
 
   // Si ya hay una grabación activa, pararla
   if (activeRec) {
     activeRec.stop();
     return;
   }
+  // No mezclar con una grabación offline en curso
+  if (localConv) { stopLocalConv(); return; }
 
   const otherSide = side === 'a' ? 'b' : 'a';
   const myLang    = document.getElementById(`lang${side.toUpperCase()}`).value;
@@ -1433,7 +1445,7 @@ async function handleFinalSpeech(transcript, side, myLang, theirLang) {
   statusEl.textContent = 'Traduciendo…';
 
   try {
-    const translated = await translateText(transcript, myLang, theirLang);
+    const { text: translated, viaOffline } = await translateAuto(transcript, myLang, theirLang);
 
     // Mostrar en el panel del receptor
     const otherLast = document.getElementById(`last${otherSide.toUpperCase()}`);
@@ -1448,7 +1460,7 @@ async function handleFinalSpeech(transcript, side, myLang, theirLang) {
     showVoiceEngine(await speakText(translated, theirLang));
 
     resetStatus(side);
-    badge('ok', 'MyMemory · Listo');
+    badge('ok', viaOffline ? `Offline · ${myLang}→${theirLang}` : 'MyMemory · Listo');
 
   } catch (err) {
     resetStatus(side);
@@ -1543,6 +1555,68 @@ async function micTest() {
   }
 }
 
+/* Dictado offline (Whisper local ES/EN) para el modo conversación.
+   Al parar de hablar se transcribe en el dispositivo y sigue el flujo
+   normal (traducir + hablar). */
+/* (localConv declarado arriba con el resto del estado) */
+
+async function startListenOffline(side) {
+  const U = side.toUpperCase();
+  const myLang = document.getElementById(`lang${U}`).value;
+  const otherSide = side === 'a' ? 'b' : 'a';
+  const theirLang = document.getElementById(`lang${otherSide.toUpperCase()}`).value;
+
+  if (localConv) { stopLocalConv(); return; }
+  if (activeRec) { activeRec.stop(); }
+
+  if (!window.LocalSTT || !LocalSTT.isSupported(myLang)) {
+    toast('📵 Dictado offline solo ES/EN por ahora. Escribe el texto.', 5000);
+    return;
+  }
+  try {
+    if (!await LocalSTT.isReady()) {
+      toast('⬇ Descarga el dictado offline primero (una vez, con internet)', 5000);
+      return;
+    }
+  } catch {
+    toast('⬇ Descarga el dictado offline primero (una vez, con internet)', 5000);
+    return;
+  }
+  try {
+    await LocalSTT.start();
+  } catch {
+    toast('🎤 No se pudo abrir el micrófono', 4000);
+    return;
+  }
+  localConv = { side, from: myLang, to: theirLang };
+  setRecordingUI(side, true);
+  document.getElementById(`status${U}`).textContent = '● Grabando sin conexión (pulsa para parar)';
+}
+
+async function stopLocalConv() {
+  const s = localConv;
+  localConv = null;
+  if (!s) return;
+  const U = s.side.toUpperCase();
+  setRecordingUI(s.side, false);
+  document.getElementById(`status${U}`).textContent = 'Transcribiendo sin conexión…';
+  try {
+    const text = await LocalSTT.stop(s.from);
+    if (!text) {
+      document.getElementById(`status${U}`).textContent = 'No se detectó voz';
+      setTimeout(() => resetStatus(s.side), 2000);
+      return;
+    }
+    const lastEl = document.getElementById(`last${U}`);
+    lastEl.textContent = text;
+    lastEl.classList.add('has-text');
+    handleFinalSpeech(text, s.side, s.from, s.to);
+  } catch {
+    document.getElementById(`status${U}`).textContent = 'Pulsa para hablar';
+    toast('❌ No se pudo transcribir sin conexión', 4000);
+  }
+}
+
 /* ══════════════════════════════════════════════════════
    CHAT BUBBLES
 ══════════════════════════════════════════════════════ */
@@ -1585,19 +1659,7 @@ async function doTranslate() {
 
   setLoading(true);
   try {
-    let result = null;
-    let viaOffline = false;
-    // Offline primero: si hay modelo local para este sentido, se usa
-    // (funciona sin conexión). Si falla, se cae al motor online.
-    if (window.Offline && Offline.isSupported(fromCode, toCode)) {
-      try {
-        if (await Offline.isReady(fromCode, toCode)) {
-          result = await Offline.translate(fromCode, toCode, text);
-          viaOffline = true;
-        }
-      } catch { result = null; }
-    }
-    if (result == null) result = await translateText(text, fromCode, toCode);
+    const { text: result, viaOffline } = await translateAuto(text, fromCode, toCode);
     lastText = text;
     document.getElementById('tgtText').value = result;
     badge('ok', viaOffline ? `Offline · ${fromCode}→${toCode}` : 'MyMemory · Listo');
@@ -1665,6 +1727,19 @@ function copyResult() {
   });
 }
 
+/* Traducción con offline primero (si hay modelo local para el sentido)
+   y online como reserva. Devuelve { text, viaOffline }. */
+async function translateAuto(text, fromCode, toCode) {
+  if (window.Offline && Offline.isSupported(fromCode, toCode)) {
+    try {
+      if (await Offline.isReady(fromCode, toCode)) {
+        return { text: await Offline.translate(fromCode, toCode, text), viaOffline: true };
+      }
+    } catch { /* cae a online */ }
+  }
+  return { text: await translateText(text, fromCode, toCode), viaOffline: false };
+}
+
 function swapLangs() {
   if (document.getElementById('srcLang').value === 'auto') { toast('Con «Detectar idioma» no se puede intercambiar'); return; }
   const sl = document.getElementById('srcLang'), tl = document.getElementById('tgtLang');
@@ -1722,11 +1797,9 @@ function setTalkUI(listening, status) {
 function talkAndTranslate() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast('⚠️ Tu navegador no soporta dictado. Usa Chrome o Edge.', 4500); return; }
-  if (navigator.onLine === false) {
-    toast('📵 Sin conexión: el micrófono necesita internet. Escribe el texto y usa el altavoz.', 5000);
-    return;
-  }
+  if (navigator.onLine === false) { talkOffline(); return; }
   if (talkRec) { talkRec.stop(); return; }
+  if (localTalk) { stopLocalTalk(); return; }
 
   const fromCode = document.getElementById('srcLang').value;
   const toCode = document.getElementById('tgtLang').value;
@@ -1754,7 +1827,13 @@ function talkAndTranslate() {
     setTalkUI(false);
     updateTalkLabels();
     if (e.error === 'no-speech') setTalkUI(false, 'No se detectó voz. Pulsa de nuevo.');
-    else if (e.error === 'not-allowed') toast('⚠️ Permiso de micrófono denegado. Actívalo en el navegador.', 5000);
+    else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      toast(window.isSecureContext
+        ? '⚠️ Micro bloqueado: dale permiso a este sitio y revisa el micro del sistema'
+        : '🔒 El micro exige HTTPS o localhost', 6000);
+    }
+    else if (e.error === 'audio-capture') toast('🎤 No hay micrófono disponible o está ocupado', 5000);
+    else if (e.error === 'network') toast('🌐 El dictado necesita internet (se reconoce en la nube)', 5000);
     else toast(`⚠️ Error de micrófono: ${e.error}`, 4000);
   };
 
@@ -1762,16 +1841,25 @@ function talkAndTranslate() {
     const said = document.getElementById('srcText').value.trim();
     talkRec = null;
     if (!said) { setTalkUI(false); updateTalkLabels(); return; }
+    await talkAfterSpeech(said, fromCode, toCode);
+  };
+
+  rec.start();
+}
+
+/* Flujo común tras obtener lo dicho (dictado online u offline):
+   traduce, muestra, reproduce y alterna el turno. */
+async function talkAfterSpeech(said, fromCode, toCode) {
     setTalkUI(false, 'Traduciendo…');
     document.getElementById('talkBtn').disabled = true;
     try {
-      const result = await translateText(said, fromCode, toCode);
+      const { text: result, viaOffline } = await translateAuto(said, fromCode, toCode);
       lastText = said;
       document.getElementById('tgtText').value = result;
       addHist(said, result, fromCode, toCode);
-      badge('ok', 'MyMemory · Listo');
+      badge('ok', viaOffline ? `Offline · ${fromCode}→${toCode}` : 'MyMemory · Listo');
       setTalkUI(false, 'Reproduciendo…');
-      await speakText(result, toCode);
+      showVoiceEngine(await speakText(result, toCode));
       // Cambio automático al idioma contrario: intercambia idiomas y textos
       // para que el intercambio quede como registro bilingüe y el siguiente
       // turno escuche en el otro idioma (ES→EN, luego EN→ES, …).
@@ -1797,9 +1885,65 @@ function talkAndTranslate() {
       document.getElementById('talkBtn').disabled = false;
       setTalkUI(false, document.getElementById('talkStatus').textContent);
     }
-  };
+}
 
-  rec.start();
+/* Botón grande de voz con dictado offline (Whisper local ES/EN).
+   Reutiliza talkAfterSpeech: traduce, muestra, reproduce y alterna. */
+/* (localTalk declarado arriba con el resto del estado) */
+
+async function talkOffline() {
+  const fromCode = document.getElementById('srcLang').value;
+  const toCode = document.getElementById('tgtLang').value;
+
+  if (localTalk) { stopLocalTalk(); return; }
+  if (talkRec) { talkRec.stop(); }
+
+  if (!window.LocalSTT || !LocalSTT.isSupported(fromCode) || fromCode === 'auto') {
+    toast('📵 Dictado offline: pon ES/EN explícitos (sin Detectar). Si no, escribe el texto.', 5000);
+    return;
+  }
+  try {
+    if (!await LocalSTT.isReady()) {
+      toast('⬇ Descarga el dictado offline primero (una vez, con internet)', 5000);
+      return;
+    }
+  } catch {
+    toast('⬇ Descarga el dictado offline primero (una vez, con internet)', 5000);
+    return;
+  }
+  try {
+    await LocalSTT.start();
+  } catch {
+    toast('🎤 No se pudo abrir el micrófono', 4000);
+    return;
+  }
+  localTalk = { from: fromCode, to: toCode };
+  setTalkUI(true, `● Grabando sin conexión en ${voiceLangName(fromCode)}… (pulsa para parar)`);
+}
+
+async function stopLocalTalk() {
+  const t = localTalk;
+  localTalk = null;
+  if (!t) return;
+  setTalkUI(false, 'Transcribiendo sin conexión…');
+  document.getElementById('talkBtn').disabled = true;
+  try {
+    const said = await LocalSTT.stop(t.from);
+    if (!said.trim()) {
+      document.getElementById('talkBtn').disabled = false;
+      setTalkUI(false);
+      updateTalkLabels();
+      return;
+    }
+    document.getElementById('srcText').value = said;
+    onInput();
+    await talkAfterSpeech(said, t.from, t.to);
+  } catch {
+    document.getElementById('talkBtn').disabled = false;
+    setTalkUI(false);
+    updateTalkLabels();
+    toast('❌ No se pudo transcribir sin conexión', 4000);
+  }
 }
 
 function replyTurn() {
@@ -2007,7 +2151,7 @@ async function kokoroAction() {
 async function refreshReadyMatrix() {
   const el = document.getElementById('offlineReady');
   if (!el) return;
-  let tEN = false, tES = false, vES = false, vEN = false, rES = false, rEN = false;
+  let tEN = false, tES = false, vES = false, vEN = false, rES = false, rEN = false, stt = false;
   try {
     if (window.Offline) {
       tEN = await Offline.isReady('es', 'en');
@@ -2017,12 +2161,92 @@ async function refreshReadyMatrix() {
       vES = await SherpaVoice.isReady('es');
       vEN = await SherpaVoice.isReady('en');
     }
+    if (window.LocalSTT) {
+      try { stt = await LocalSTT.isReady(); } catch { stt = false; }
+    }
     const vl = window.__voiceLoad || {};
     rES = vl.es === '✓';
     rEN = vl.en === '✓';
   } catch {}
   const mark = (ok) => ok ? '✓' : '✗';
-  el.textContent = `Sin conexión listo: texto ES→EN ${mark(tEN)} · EN→ES ${mark(tES)} · voz natural ES ${mark(vES)} / EN ${mark(vEN)} · robótica ES ${mark(rES)} / EN ${mark(rEN)}`;
+  el.textContent = `Sin conexión listo: texto ES→EN ${mark(tEN)} · EN→ES ${mark(tES)} · voz natural ES ${mark(vES)} / EN ${mark(vEN)} · robótica ES ${mark(rES)} / EN ${mark(rEN)} · dictado ${mark(stt)}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   DICTADO OFFLINE (Whisper local, vale ES+EN con una descarga ~42 MB)
+══════════════════════════════════════════════════════ */
+/* (sttMode/sttTries declarados arriba con el resto del estado) */
+
+async function refreshSTT() {
+  const st = document.getElementById('sttStatus');
+  const btn = document.getElementById('sttBtn');
+  if (!st || !btn) return;
+
+  if (!('caches' in window) || !window.LocalSTT) {
+    if (sttTries++ < 40) {
+      st.textContent = 'Dictado offline: cargando…';
+      setTimeout(refreshSTT, 500);
+    } else {
+      sttMode = 'unavailable';
+      st.textContent = 'Dictado offline no disponible en este navegador';
+      btn.style.display = 'none';
+    }
+    return;
+  }
+  let ready = false;
+  try { ready = await LocalSTT.isReady(); } catch { ready = false; }
+  if (ready) {
+    sttMode = 'ready';
+    st.textContent = '✓ Dictado offline listo (ES/EN, sin conexión)';
+    btn.textContent = 'Borrar dictado';
+    btn.style.display = '';
+    btn.disabled = false;
+  } else {
+    sttMode = 'missing';
+    st.textContent = 'Dictado offline: sin descargar (~42 MB, una vez, vale ES+EN)';
+    btn.textContent = '⬇ Descargar dictado';
+    btn.style.display = '';
+    btn.disabled = false;
+  }
+}
+
+async function sttAction() {
+  const btn = document.getElementById('sttBtn');
+  const st = document.getElementById('sttStatus');
+
+  if (sttMode === 'ready') {
+    btn.disabled = true;
+    try {
+      await LocalSTT.remove();
+      toast('Dictado offline borrado. Se descargará de nuevo cuando lo pidas.');
+    } catch {
+      toast('❌ No se pudo borrar el dictado', 4000);
+    }
+    refreshSTT();
+    if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
+    return;
+  }
+  if (sttMode !== 'missing') return;
+  sttMode = 'busy';
+  btn.disabled = true;
+  try {
+    await LocalSTT.download((ev) => {
+      if (ev.status === 'initiate') st.textContent = `Preparando ${ev.file || 'modelo'}…`;
+      else if (ev.status === 'done') st.textContent = `✓ ${ev.file || 'archivo'} listo`;
+      else if (ev.status === 'progress' || ev.total) {
+        const mb = (ev.loaded / 1048576).toFixed(0);
+        st.textContent = ev.total
+          ? `Descargando dictado… ${mb} de ${(ev.total / 1048576).toFixed(0)} MB (${Math.round(ev.loaded / ev.total * 100)}%)`
+          : `Descargando dictado… ${mb} MB`;
+      } else st.textContent = `Descargando dictado… ${ev.file || ''}`;
+    });
+    toast('✓ Dictado listo. Ya puedes dictar sin conexión (ES/EN).', 5000);
+  } catch (e) {
+    const msg = String((e && e.message) || e || '').slice(0, 120);
+    toast(`❌ No se pudo descargar el dictado${msg ? ': ' + msg : '. Comprueba la conexión.'}`, 6000);
+  }
+  refreshSTT();
+  if (typeof refreshReadyMatrix === 'function') refreshReadyMatrix();
 }
 
 /* ══════════════════════════════════════════════════════

@@ -4,13 +4,29 @@
    del navegador los guarda para el sin conexión. */
 'use strict';
 
-const CACHE = 'freeduck-v19';
+// WASM de ONNX Runtime Web (el repo no lo incluye: GitHub lo marca como
+// secreto): CDN oficial, cacheado en la primera carga para el sin conexión.
+const ORT_WASM_CDN = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/dist/ort-wasm-simd-threaded.asyncify.wasm';
+
+// Runtime de Transformers (su bundle minificado dispara el detector de
+// secretos de GitHub): mismo trato que el WASM.
+const TRANSFORMERS_CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1/dist/transformers.min.js';
+
+// Archivos que no viajan en el repo y se traen del CDN en la primera carga
+const CDN_FALLBACK = {
+  '/vendor/stt/transformers.min.js': TRANSFORMERS_CDN,
+  '/vendor/stt/ort-wasm-simd-threaded.asyncify.wasm': ORT_WASM_CDN,
+};
+
+const CACHE = 'freeduck-v21';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './offline.js',
   './voice-sherpa.js',
+  './voice-whisper.js',
+  './vendor/stt/ort-wasm-simd-threaded.asyncify.mjs',
   './vendor/sherpa/sherpa-worker.js',
   './vendor/sherpa/sherpa-onnx-tts.js',
   './vendor/sherpa/sherpa-onnx-wasm-main-tts.js',
@@ -59,6 +75,27 @@ self.addEventListener('fetch', (event) => {
   // Solo se cachea lo propio (misma origin). La API de traducción y las
   // fuentes siempre van a la red.
   if (url.origin !== location.origin) return;
+  // Runtimes que no viajan en git: primero caché, luego local, luego CDN.
+  const cdnUrl = CDN_FALLBACK[url.pathname];
+  if (cdnUrl) {
+    event.respondWith(
+      caches.match(event.request).then((hit) => hit || fetch(event.request).then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(event.request, copy));
+          return res;
+        }
+        throw new Error('HTTP ' + res.status);
+      }).catch(() => fetch(cdnUrl).then((res) => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(event.request, copy));
+        return res;
+      })))
+    );
+    return;
+  }
+  // El WASM de ONNX (~27 MB) tampoco viaja en el repo: lo cubre CDN_FALLBACK.
   // Navegación: primero la red (para ver siempre la última versión),
   // con la caché como respaldo si no hay conexión. 'reload' obliga a
   // revalidar el documento (si no, la caché HTTP serviría versiones viejas).
