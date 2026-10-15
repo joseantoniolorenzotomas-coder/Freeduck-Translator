@@ -113,7 +113,17 @@ window.SherpaVoice = {
   },
   async isReady(lang) {
     if (!VOICES[lang]) return false;
-    return flag(lang);
+    if (flag(lang)) return true;
+    // Si el marcado se perdió (limpieza del navegador) pero los archivos
+    // siguen en caché, se da por lista sin redescargar.
+    try {
+      for (const key of [VOICES[lang].model, VOICES[lang].tokens]) {
+        const hit = await caches.match(new URL(key, document.baseURI).href);
+        if (!hit) return false;
+      }
+      setFlag(lang);
+      return true;
+    } catch { return false; }
   },
   async download(lang, onProgress) {
     await ensurePhonemize();

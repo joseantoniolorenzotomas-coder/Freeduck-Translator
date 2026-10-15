@@ -430,6 +430,9 @@ def main():
           'type="module" src="voice-sherpa.js"' in html
           and "window.SherpaVoice" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8")
           and "generateWithConfig" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8"))
+    check("voz-isready-tolerante",
+          "caches.match" in (ROOT / "voice-sherpa.js").read_text(encoding="utf-8")
+          and "Falta la voz" in js)
     check("voz-sherpa-voces",
           all((ROOT / f).exists() for f in
               ("voices/es/es_ES-sharvard-medium.onnx", "voices/es/tokens.txt",

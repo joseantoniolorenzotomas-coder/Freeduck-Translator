@@ -1232,7 +1232,7 @@ function speakText(text, langCode) {
           toast('❌ La voz natural falló al hablar', 4000);
           return null;
         }
-        toast('⬇ Descarga la voz natural para usarla (es la voz principal)', 5000);
+        toast(`⬇ Falta la voz ${voiceLangName(langCode)}: pulsa «Descargar voz natural» con destino ${voiceLangName(langCode)}`, 6000);
         return null;
       } catch {
         return null;
