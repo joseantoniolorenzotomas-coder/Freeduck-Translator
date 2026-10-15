@@ -406,11 +406,14 @@ def main():
           'onclick="micTest()"' in html and "function micTest(" in js
           and "getUserMedia" in js and "isSecureContext" in js)
     check("error-con-motivo",
-          "Comprueba la conexión" not in js
+          "Error al traducir. Comprueba" not in js
           and "String(err.message || 'Error de conexión')" in js)
     check("matriz-offline",
           'id="offlineReady"' in html and "function refreshReadyMatrix(" in js
           and "Sin conexión listo" in js)
+    check("guia-descargas",
+          "Cómo descargarlo y usarlo" in html and "modo avión" in html
+          and "Añadir a pantalla de inicio" in html)
     check("aviso-file",
           "location.protocol === 'file:'" in js
           and 'content://' in js)
