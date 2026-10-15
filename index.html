@@ -316,6 +316,14 @@
   .h-sep { height: 1px; background: var(--border); }
 
   /* ══════════ CONVERSATION MODE ══════════ */
+  .conv-hint {
+    margin: 8px 16px 14px; padding: 12px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--r-md); font-size: 0.82rem; color: var(--text2);
+    text-align: center; line-height: 1.5;
+  }
+  .conv-hint strong { color: var(--text); }
+
   .conv-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -745,7 +753,12 @@
     <div class="section-head">
       <span class="section-title">Conversación</span>
       <div class="section-line"></div>
+      <button class="btn btn-outline" id="swapConvBtn" onclick="swapConv()" title="Intercambiar los idiomas de A y B">🔁 Intercambiar A/B</button>
     </div>
+    <p class="conv-hint" id="convHint">
+      Cada persona habla <strong>su</strong> idioma y escucha el otro: da igual quién empiece.
+      Elige un idioma distinto en cada tarjeta y pulsa el micro de quien vaya a hablar.
+    </p>
 
     <!-- No speech fallback -->
     <div class="no-speech" id="noSpeech" style="display:none">
@@ -2000,6 +2013,12 @@ async function stopLocalTalk() {
     updateTalkLabels();
     toast('❌ No se pudo transcribir sin conexión', 4000);
   }
+}
+
+function swapConv() {
+  const a = document.getElementById('langA'), b = document.getElementById('langB');
+  [a.value, b.value] = [b.value, a.value];
+  toast(`Persona A habla ${voiceLangName(a.value)} · Persona B habla ${voiceLangName(b.value)}`);
 }
 
 function replyTurn() {
