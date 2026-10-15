@@ -426,6 +426,19 @@ def main():
     check("error-con-motivo",
           "Error al traducir. Comprueba" not in js
           and "String(err.message || 'Error de conexión')" in js)
+    check("red-fiable",
+          # navigator.onLine no basta: en muchos móviles sigue en 'true' con el
+          # modo avión. La app sonda un servicio exterior con memoria corta.
+          "async function hayInternet(" in js
+          and "redComprobada.cuando < 15000" in js
+          and "AbortSignal.timeout(1500)" in js
+          and js.count("hayInternet()") >= 3,
+          "hayInternet() se usa en conversación y en el botón redondo")
+    check("voz-avisa-el-motivo",
+          "ultimoMotivoVoz" in js
+          and "No sonó la voz" in js
+          and "catch (e) {" in js.split("function speakText")[1][:2600],
+          "un fallo de voz no se calla")
     check("matriz-offline",
           'id="offlineReady"' in html and "function refreshReadyMatrix(" in js
           and "Sin conexión listo" in js and "dictado ${mark(stt)}" in js)

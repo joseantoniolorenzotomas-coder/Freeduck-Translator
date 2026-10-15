@@ -1046,6 +1046,7 @@ let lastText   = '';
 let activeRec  = null;   // SpeechRecognition instance activa
 let activeSide = null;   // 'a' | 'b'
 let ttsPlaying = false;   // hay una locución en curso
+let ultimoMotivoVoz = ''; // por qué no sonó la última locución
 let offlineMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
 let offlineTries = 0;
 let vozMode = 'unknown'; // unavailable|unsupported|missing|ready|busy
@@ -1205,6 +1206,26 @@ async function ping() {
   }
 }
 
+/* ¿Hay internet de verdad?
+   navigator.onLine no es fiable: refleja si el dispositivo tiene red, no si
+   esta funciona. En muchos móviles sigue en 'true' con el modo avión activado
+   (o con la red caída), y entonces la app intentaba usar servicios en la nube
+   que no respondían. Por eso se hace una sonda corta a un servicio exterior,
+   con memoria de 15 s para no pagar el coste en cada turno. */
+let redComprobada = null; // { ok: boolean, cuando: number }
+async function hayInternet() {
+  if (navigator.onLine === false) return false;
+  const ahora = Date.now();
+  if (redComprobada && ahora - redComprobada.cuando < 15000) return redComprobada.ok;
+  let ok = true;
+  try {
+    const r = await fetch(`${MYMEMORY_URL}?q=hola&langpair=es|en`, { signal: AbortSignal.timeout(1500) });
+    ok = r.ok;
+  } catch { ok = false; }
+  redComprobada = { ok, cuando: ahora };
+  return ok;
+}
+
 function badge(state, text) {
   const el = document.getElementById('badge');
   el.className = 'status-badge ' + state;
@@ -1256,13 +1277,16 @@ function speakText(text, langCode) {
             new Promise(res => setTimeout(() => res(false), Math.min(120000, 30000 + String(text).length * 300))),
           ]);
           try { SherpaVoice.stop(); } catch {}
-          if (ok) return 'natural';
+          if (ok) { ultimoMotivoVoz = ''; return 'natural'; }
+          ultimoMotivoVoz = 'el motor natural falló al hablar';
           toast('❌ La voz natural falló al hablar', 4000);
           return null;
         }
+        ultimoMotivoVoz = `falta la voz de ${voiceLangName(langCode)}`;
         toast(`⬇ Falta la voz natural de ${voiceLangName(langCode)}: pulsa «⬇ Descarga para usar sin conexión» (todo junto).`, 6000);
         return null;
-      } catch {
+      } catch (e) {
+        ultimoMotivoVoz = String((e && e.message) || e).slice(0, 90);
         return null;
       }
     }
@@ -1341,7 +1365,11 @@ function showVoiceEngine(eng) {
       ? 'Última locución: 🤖 robótica offline'
       : eng === 'system'
         ? 'Última locución: 🔊 voz del sistema'
+      // Sin voz no se calla: se dice, para poder diagnosticar en el momento.
         : 'Última locución: — (sin voz)';
+  // Aviso claro si no sonó nada. Con «natural» elegido no hay reserva a la
+  // robótica (preferencia estricta), así que conviene saber por qué.
+  if (!eng && ultimoMotivoVoz) toast(`🔇 No sonó la voz: ${ultimoMotivoVoz}`, 7000);
   paintVoiceLoad();
 }
 
@@ -1392,13 +1420,15 @@ function speakerTest() {
 /* ══════════════════════════════════════════════════════
    MODO CONVERSACIÓN — escucha
 ══════════════════════════════════════════════════════ */
-function startListen(side) {
+async function startListen(side) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
 
-  // Sin conexión se usa el dictado local (Whisper); con conexión, el del
-  // navegador (más rápido). La escucha local necesita el modelo descargado.
-  if (navigator.onLine === false) { startListenOffline(side); return; }
+  // Sin conexión de verdad se usa el dictado local (Whisper); con conexión,
+  // el del navegador (más rápido). La escucha local necesita el modelo
+  // descargado. NO basta con navigator.onLine: en muchos móviles sigue en
+  // 'true' con el modo avión activado (ver hayInternet()).
+  if (navigator.onLine === false || !(await hayInternet())) { startListenOffline(side); return; }
 
   // Si ya hay una grabación activa, pararla
   if (activeRec) {
@@ -1819,10 +1849,11 @@ function setTalkUI(listening, status) {
   if (status) document.getElementById('talkStatus').textContent = status;
 }
 
-function talkAndTranslate() {
+async function talkAndTranslate() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast('⚠️ Tu navegador no soporta dictado. Usa Chrome o Edge.', 4500); return; }
-  if (navigator.onLine === false) { talkOffline(); return; }
+  // Igual que en la conversación: sin conexión real, dictado local.
+  if (navigator.onLine === false || !(await hayInternet())) { talkOffline(); return; }
   if (talkRec) { talkRec.stop(); return; }
   if (localTalk) { stopLocalTalk(); return; }
 

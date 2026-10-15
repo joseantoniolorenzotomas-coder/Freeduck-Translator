@@ -40,7 +40,7 @@ function nombreOrt(ruta) {
 // ─────────────────────────────────────────────────────────────
 // Subir este número es lo que publica una versión nueva: al activarse borra
 // las cachés viejas.
-const CACHE = 'freeduck-v30';
+const CACHE = 'freeduck-v31';
 
 const ASSETS = [
   './',
