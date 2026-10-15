@@ -91,17 +91,27 @@ No se debe anunciar una descarga como universal si no funciona en todos los disp
   imagen se construya (no hay Docker en este equipo).
 
 ### 5.2. Ejecutables de escritorio (Electron)
-- Carpeta `electron/`: `main.js` carga el mismo `index.html` local en una
-  ventana propia (sin integración Node, enlaces externos al navegador).
+- Carpeta `electron/`: `main.js` carga el mismo `index.html` que la PWA (va
+  empaquetado en `app.asar`) en una ventana propia, sin integración Node y con
+  los enlaces externos al navegador del sistema.
 - Requisitos de compilación: Node 18+ y `npm install` dentro de `electron/`.
 - Comandos: `npm run dist:mac` (DMG x64+arm64), `npm run dist:win`
   (instalador NSIS x64), o `npm run dist` para ambos. Salen en `electron/dist/`.
-- **Sin firmar:** macOS (Gatekeeper) y Windows (SmartScreen) mostrarán avisos
-  al abrirlo; firmarlo queda pendiente de decidir.
-- Los ejecutables de `electron/dist/` están **obsoletos**: se compilaron antes
-  del modo offline y con el nombre antiguo del proyecto. Hay que recompilarlos
-  (`npm run dist`) para que lleven el nombre actual y el funcionamiento sin
-  conexión.
+- **COMPILADO Y VERIFICADO 2026-10-16** (macOS, Electron 44.7.0):
+  - `Freeduck-Translator-0.2.0.dmg` (223 MB, x64)
+  - `Freeduck-Translator-0.2.0-arm64.dmg` (219 MB, Apple Silicon)
+  - `Freeduck-Translator Setup 0.2.0.exe` (198 MB, Windows x64 NSIS)
+  - Los tres DMG/EXE están íntegros y con la arquitectura correcta
+    (`lipo -info` → x86_64 / arm64).
+  - Con el ejecutable empaquetado arrancado: sin `ERR_FILE_NOT_FOUND`, el
+    binario se mantiene vivo y los modelos, las voces, `voice-whisper.js` y los
+    vendors están dentro (73 archivos en `app.asar`, verificado con
+    `asar list`).
+  - Limitación: el ejecutable va **sin firmar**. macOS (Gatekeeper) y Windows
+    (SmartScreen) mostrarán aviso al abrirlo; para firmarlo hay que decidir un
+    certificado (de pago). En macOS, ábrelo con clic derecho → Abrir.
+  - Los ejecutables antiguos («FreeDuck Traductor», 0.1.0) se borraron: eran
+    previos al modo offline y **sin las voces**.
 
 ## 6. Requisito de funcionamiento sin conexión
 

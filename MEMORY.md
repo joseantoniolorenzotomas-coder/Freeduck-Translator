@@ -205,3 +205,24 @@ Añadir cada decisión aprobada con este formato:
 **Lección que queda registrada:** en `Permissions-Policy` (y en
 `allow` de iframes) una lista vacía significa «prohibido para todos», no «sin
 restricción». Fue un fallo real de esta sesión.
+
+
+### 2026-10-16 — Electron compilado y verificado (y un fallo que encontré al hacerlo)
+- **Estado:** compilado con Electron 44.7.0 desde macOS. Tres entregables en
+  `electron/dist/`, todos íntegros y con arquitectura comprobada:
+  `Freeduck-Translator-0.2.0.dmg` (223 MB, x64),
+  `-0.2.0-arm64.dmg` (219 MB) y `Freeduck-Translator Setup 0.2.0.exe`
+  (198 MB, Windows NSIS x64). Con el empaquetado arrancado no hay
+  `ERR_FILE_NOT_FOUND` y el `app.asar` lleva los 73 archivos (modelos, voces,
+  `voice-whisper.js`, vendors, imágenes).
+- **Fallo real encontrado al compilar:** la lista `files` del build **no
+  incluía `voices/**/*` ni `voice-whisper.js`**, así que el ejecutable salía
+  sin voz natural ni dictado. Corregido y con dos tests de regresión
+  (`electron-empaqueta-voces`, `electron-main-dice-offline`).
+- **Aviso para el propietario:** los ejecutables van **sin firmar**. macOS
+  (Gatekeeper) y Windows (SmartScreen) avisarán al abrirlos; en macOS se abre
+  con clic derecho → Abrir. Firmar requiere certificado de pago.
+- **Mejora de higiene:** los intermedios `dist/mac`, `dist/win-unpacked` se
+  borran tras compilar (942 MB) para dejar solo los entregables (421 MB).
+- **Aprobada por:** propietario del proyecto (sesión 2026-10-16, pidió
+  recompilarlos).

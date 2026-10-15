@@ -513,6 +513,20 @@ def main():
           "Cross-Origin-Opener-Policy" in ng and "Cross-Origin-Embedder-Policy" in ng)
     check("nginx-mimes", "application/wasm" in ng and "webmanifest" in ng)
     comp = (ROOT / "docker-compose.yml").read_text(encoding="utf-8") if (ROOT / "docker-compose.yml").exists() else ""
+    # ---------- 6k-bis. empaquetado Electron ----------
+    epkg = ROOT / "electron" / "package.json"
+    check("electron-empaqueta-voces",
+          # Sin estas entradas el ejecutable salía sin voz natural ni dictado:
+          # fallo real detectado al compilar.
+          epkg.exists()
+          and '"voices/**/*"' in epkg.read_text(encoding="utf-8")
+          and '"voice-whisper.js"' in epkg.read_text(encoding="utf-8")
+          and '"voice-sherpa.js"' in epkg.read_text(encoding="utf-8")
+          and "requiere conexión a internet" not in epkg.read_text(encoding="utf-8").lower(),
+          "el build de Electron debe incluir voces y dictado")
+    check("electron-main-dice-offline",
+          (ROOT / "electron" / "main.js").exists()
+          and "sin conexión" in (ROOT / "electron" / "main.js").read_text(encoding="utf-8"))
     check("compose-puerto", "8901:80" in comp and "build:" in comp)
 
     # ---------- Marca ----------

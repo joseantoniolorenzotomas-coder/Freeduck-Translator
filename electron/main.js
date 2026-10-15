@@ -1,6 +1,8 @@
 /* Freeduck-Translator — ventana de escritorio (Electron).
-   Carga la misma web local (index.html). La traducción y la voz siguen
-   necesitando internet (motor online); sin conexión la app lo indica. */
+   Carga la misma web local (index.html) que la PWA: mismos motores, mismos
+   modelos. La traducción ES↔EN, la voz y el dictado funcionan sin conexión
+   una vez pulsado «⬇ Descarga para usar sin conexión» dentro de la app.
+   El resto de idiomas y la primera preparación sí necesitan internet. */
 'use strict';
 
 const { app, BrowserWindow, shell } = require('electron');

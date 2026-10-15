@@ -1,8 +1,8 @@
 {
   "name": "freeduck-translator",
   "productName": "Freeduck-Translator",
-  "version": "0.1.0",
-  "description": "Traductor gratuito. Esta versión requiere conexión a internet.",
+  "version": "0.2.0",
+  "description": "Traductor gratuito con modo offline para ES↔EN (texto, voz y dictado).",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -26,7 +26,10 @@
           "manifest.webmanifest",
           "sw.js",
           "offline.js",
+          "voice-sherpa.js",
+          "voice-whisper.js",
           "models/**/*",
+          "voices/**/*",
           "vendor/**/*",
           "img/**/*"
         ]
@@ -39,12 +42,16 @@
     ],
     "mac": {
       "icon": "icon.icns",
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.education"
     },
     "win": {
       "icon": "icon.ico",
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     },
     "nsis": {
       "oneClick": false,
