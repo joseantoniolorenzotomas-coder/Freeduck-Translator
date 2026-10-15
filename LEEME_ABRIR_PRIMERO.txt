@@ -23,8 +23,16 @@ ORDENADOR
   y abre http://localhost:8901
 - Instalable: desde Chrome, menú ⋮ → «Instalar Freeduck-Translator».
 
-DESCARGAR EL OFFLINE (una vez, con internet)
-Dentro de la app, pulsa «Descargar modelo» y «Descargar voz
-natural». Después funciona sin conexión el texto y la voz ES↔EN.
+PREPARAR EL SIN CONEXIÓN (una vez, con internet)
+Dentro de la app, pulsa «⬇ Descarga para usar sin conexión».
+Baja todo junto (~140 MB de caché). Después, en modo avión,
+funcionan por sí solos:
 
-Versión 0.3-voz · Ayuda y código en el repositorio del proyecto.
+  · traducir texto ES→EN y EN→ES
+  · dictar lo que dices (ya no usa internet)
+  · la respuesta con voz natural
+
+Comprueba que la línea «Sin conexión listo» queda toda en ✓.
+
+DUDAS O IDEAS: pulsa «📖 Cómo funciona y contacto»
+en la app y escribe a duckdev77@gmail.com

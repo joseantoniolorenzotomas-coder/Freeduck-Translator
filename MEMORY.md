@@ -40,7 +40,7 @@ Este archivo registra decisiones confirmadas, contexto útil y asuntos pendiente
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-12).
 
 ### 2026-10-12 — Tercera ampliación: otros 10 idiomas
-- **Decisión:** Añadir holandés (nl), griego (el), rumano (ro), húngaro (hu), checo (cs), malayo (ms), urdu (ur), tamil (ta), hebreo (he) y suajili (sw). Total: 38 idiomas.
+- **Decisión:** Añadir holandés (nl), griego (el), rumano (ro), húngaro (hu), checo (cs), malayo (ms), urdu (ur), tamil (ta), hebreo (he) y suajili (sw). Total: 38 idiomas en ese momento (hoy son 42, tras añadir Català, Galego, Euskera y Valencià).
 - **Motivo:** Petición del propietario; verificados contra MyMemory con frases reales (`responseStatus: 200`, traducciones correctas).
 - **Consecuencias:** Igual que ampliaciones anteriores (locales de voz añadidos).
 - **Aprobada por:** propietario del proyecto (sesión 2026-10-12).
@@ -177,3 +177,31 @@ Añadir cada decisión aprobada con este formato:
 - **Alternativas consideradas:**
 - **Consecuencias:**
 - **Aprobada por:**
+
+
+---
+
+## 2026-10-15 (tarde) — Documentación puesta al día
+
+**Qué se ha revisado y corregido** (todo contrastado con el código, no de memoria):
+
+- **§5.1 (PWA):** decía que hacía falta internet para traducir y la voz. Falso
+  desde que existe el botón único: ahora detalla qué va en el paquete (49 MB de
+  modelos, 39 MB de voces, robótica incluida) y qué se baja al pulsarlo
+  (Whisper ~42 MB + runtimes de CDN ~28 MB). Añade las dos vistas y el contacto.
+- **§5.2 (Electron):** los ejecutables de `electron/dist/` están obsoletos
+  (nombre antiguo y pre-offline); hay que recompilarlos.
+- **§5.3 (Docker):** la voz natural ya no está «en beta» (verificada); lo único
+  sin comprobar sigue siendo que la imagen se construya.
+- **§6.1:** separa lo que viaja en el repo de lo que se descarga, y explica que
+  modelos y voces locales solo se *copian* a la caché, no se descargan.
+- **§7:** número real de comprobaciones y qué cubren, incluidos los dos tests
+  nuevos de regresión (micrófono no prohibido y fallback al dictado local).
+- **§8.1:** fecha actualizada, añade MyMemory, Google Fonts (OFL-1.1) y
+  `vendor/stt/NOTICE.txt` a la lista de atribuciones.
+- **README y LEEME:** 42 idiomas (no 38), dictado offline, un solo botón de
+  descarga, `voice-whisper.js` en el árbol y correo de contacto.
+
+**Lección que queda registrada:** en `Permissions-Policy` (y en
+`allow` de iframes) una lista vacía significa «prohibido para todos», no «sin
+restricción». Fue un fallo real de esta sesión.
